@@ -1,3 +1,31 @@
+
+
+void setup_lora() {
+  // Init LORA SPI
+  SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
+
+  // setup lora
+  setStatus(systemState, currentMethod);
+  radiolibState = radio.begin(
+    config.loraFrequency,
+    config.loraBw,
+    config.loraSf,
+    config.loraCr,
+    config.loraSync,
+    config.loraTxPower,             // output power (not used for RX)
+    config.loraPreamble
+  );
+  if ( doRadiolibState(radiolibState) ) {
+    return;
+  }
+  // Enable AFC (Automatic Frequency Correction)
+  radio.setAFCBandwidth(config.loraAfcBandwidth);
+  radio.setAFC(config.loraAfc);
+  // Enable CRC
+  radio.setCRC(config.loraCrc); 
+
+}
+
 void enableRX(void) {
   radiolibState = radio.startReceive();
   if ( doRadiolibState(radiolibState) ) {
@@ -119,6 +147,7 @@ void transmitPacket(void) {
   }
   setStatus(IN_TX, "transmitPacket()");
   txPacketCount++;
+  lastTxTime = millis();
 
   // Build message
   int m = millis() % 100;

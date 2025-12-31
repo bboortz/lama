@@ -1,3 +1,6 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
 
 // LILYGO T3 V1.6.x pin definitions
 #define LORA_SCK 5
@@ -30,3 +33,29 @@
 #define DEFAULT_LORA_AFC_BANDWIDTH 125.0
 #define DEFAULT_TX_INTERVAL 3000  // 5 seconds
 #define DEFAULT_RX_TIMEOUT 10000  // 10 seconds without RX = lost
+
+
+// Config structure
+struct Config {
+  uint8_t nodeId;           
+  uint8_t networkId;        
+  uint8_t capabilities;
+  char user[16];
+  float loraFrequency;
+  float loraBw;
+  int loraSf;
+  int loraCr;
+  int loraSync;
+  int loraPreamble;
+  int loraTxPower;
+  bool loraCrc;
+  bool loraAfc;
+  float loraAfcBandwidth;
+  int txInterval;
+  int rxTimeout;
+};
+
+Config config;
+
+
+#endif

@@ -1,96 +1,17 @@
 
 #include <SPI.h>
+
 #include <RadioLib.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "config.h"
+#include "state.h"
+#include "display.h"
+#include "lora.h"
 #include "packet.h"
+#include "rx_history.h"
 
-
-
-
-
-// Create SX1276 instance
-SX1276 radio = new Module(LORA_CS, LORA_IRQ, LORA_RST, RADIOLIB_NC);
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
-
-// State
-enum system_state_enum {INIT, READY, DO_RX, DO_TX, IN_RX, IN_TX, IDLE, FAILED};
-system_state_enum systemState = INIT;
-int radiolibState = 0;
-int rxState = 0;
-int txState = 0;
-enum network_state_enum {LOST, CONNECTED};
-network_state_enum networkState = LOST;
-String currentMethod = "setup";
-
-// RX TX intervals
-unsigned long lastTxTime = 0;
-unsigned long lastRxTime = 0; 
-
-// last tx message
-String txMessage = "-";
-
-// Message history structure
-int rxPacketLost = 0;
-int rxPacketCount = 0;
-int txPacketCount = 0;
-struct RxMessage {
-  String user;
-  int seq;        // message id
-  int msecs;      // milliseconds
-  float snr;      // SNR we measured when receiving
-  float rssi; 
-  float freqErr;
-  float rsnr;     // SNR they reported (from our TX)
-  
-};
-#define RX_HISTORY_SIZE 3
-RxMessage rxHistory[RX_HISTORY_SIZE];
-int rxHistoryCount = 0;
-
-// user stats
-#define MAX_USERS 5
-struct UserStats {
-  String name;
-  int lastSeq;
-  int received;
-  int lost;
-  // Signal quality per user
-  float lastRssi;
-  float lastSnr;
-  float lastFreqErr;
-  float minRssi;
-  float maxRssi;
-  float avgRssi;
-  float avgSnr;
-  float avgFreqErr;
-};
-UserStats userStats[MAX_USERS];
-int userCount = 0;
-
-// Config structure
-struct Config {
-  uint8_t nodeId;           
-  uint8_t networkId;        
-  uint8_t capabilities;
-  char user[16];
-  float loraFrequency;
-  float loraBw;
-  int loraSf;
-  int loraCr;
-  int loraSync;
-  int loraPreamble;
-  int loraTxPower;
-  bool loraCrc;
-  bool loraAfc;
-  float loraAfcBandwidth;
-  int txInterval;
-  int rxTimeout;
-};
-
-Config config;
 
 
 void updateStatus(void) {
@@ -152,6 +73,13 @@ void updateStatus(void) {
 
 
 
+void setup_wifi() {
+
+
+}
+
+
+
 void setup_board() {
   currentMethod = "setup_board()";
   systemState = INIT; 
@@ -163,40 +91,10 @@ void setup_board() {
   // Load config BEFORE radio setup
   loadConfig();
  
-  // Init OLED
-  Wire.begin(OLED_SDA, OLED_SCL);
-  if (display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setTextColor(WHITE);
-    display.setCursor(0, 0);
-    setStatus(systemState, currentMethod);
-  }
-
+  setup_display();
   delay(1000);
 
-  // Init SPI
-  SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
-
-  // setup lora
-  setStatus(systemState, currentMethod);
-  radiolibState = radio.begin(
-    config.loraFrequency,
-    config.loraBw,
-    config.loraSf,
-    config.loraCr,
-    config.loraSync,
-    config.loraTxPower,             // output power (not used for RX)
-    config.loraPreamble
-  );
-  if ( doRadiolibState(radiolibState) ) {
-    return;
-  }
-  // Enable AFC (Automatic Frequency Correction)
-  radio.setAFCBandwidth(config.loraAfcBandwidth);
-  radio.setAFC(config.loraAfc);
-  // Enable CRC
-  radio.setCRC(config.loraCrc); 
+  setup_lora();
   delay(1000);
 
   // setup receiver
@@ -208,7 +106,6 @@ void setup_board() {
   // setup done
   setStatus(READY, "loop()");
   delay(1000);
-  
 }
 
 
@@ -262,7 +159,7 @@ void loop() {
 
       if (millis() - lastTxTime > config.txInterval) {
         setSystemState(DO_TX);
-        lastTxTime = millis();
+        
       }
       
       break;
