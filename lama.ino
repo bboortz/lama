@@ -5,7 +5,6 @@ todos
 */
 #include <SPI.h>
 #include <Wire.h>
-#include <WiFi.h>
 
 #include "config.h"
 #include "state.h"
@@ -14,6 +13,7 @@ todos
 #include "lora.h"
 #include "packet.h"
 #include "rx_history.h"
+#include "wifi.h"
 
 
 
@@ -36,8 +36,8 @@ void setupBoard() {
   setupLora();
   delay(1000);
 
-  //setupWifi();
-  //delay(1000);
+  setupWifi();
+  delay(1000);
 
   // setup done
   setStatus(READY, "loop()");
@@ -55,7 +55,8 @@ void setup() {
 void loop() {
   updateStatus();
   handleSerialCommand();
-  
+  handleWifi();
+
   switch ( systemState ) {
     case INIT:
       // Serial.println("* INIT");
