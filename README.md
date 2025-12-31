@@ -24,10 +24,10 @@ LAMA helps you systematically discover and map LoRa network coverage and perform
 
 
 * LoRa Parameter Tuning
- * Adjustable spreading factor (SF7-SF12)
- * Configurable bandwidth
- * Transmission power control
- * Frequency band selection
+  * Adjustable spreading factor (SF7-SF12)
+  * Configurable bandwidth
+  * Transmission power control
+  * Frequency band selection
 
 
 
