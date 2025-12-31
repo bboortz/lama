@@ -1,31 +1,14 @@
-/*
-TODOS
-
-
-
-
-*/
 
 #include <SPI.h>
 #include <RadioLib.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include "config.h"
 #include "packet.h"
 
-// LILYGO T3 V1.6.x pin definitions
-#define LORA_SCK 5
-#define LORA_MISO 19
-#define LORA_MOSI 27
-#define LORA_CS 18
-#define LORA_RST 23
-#define LORA_IRQ 26
 
-// OLED
-#define OLED_SDA 21
-#define OLED_SCL 22
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+
 
 
 // Create SX1276 instance

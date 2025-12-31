@@ -1,22 +1,6 @@
 #include <Preferences.h>
 
-// default config
-#define DEFAULT_NODEID 1
-#define DEFAULT_NETWORKID 1
-#define DEFAULT_CAPABILITIES CAPA_RX | CAPA_TX
-#define DEFAULT_USER "Benni2"
-#define DEFAULT_LORA_FREQ 868.0
-#define DEFAULT_LORA_BW 125.0
-#define DEFAULT_LORA_SF 9
-#define DEFAULT_LORA_CR 7
-#define DEFAULT_LORA_SYNC 0x12
-#define DEFAULT_LORA_PREAMBLE 8
-#define DEFAULT_LORA_TXPOWER 10
-#define DEFAULT_LORA_CRC true
-#define DEFAULT_LORA_AFC true
-#define DEFAULT_LORA_AFC_BANDWIDTH 125.0
-#define DEFAULT_TX_INTERVAL 3000  // 5 seconds
-#define DEFAULT_RX_TIMEOUT 10000  // 10 seconds without RX = lost
+
 
 
 Preferences preferences;
