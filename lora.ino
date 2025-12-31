@@ -1,12 +1,16 @@
 
 
-void setup_lora() {
+void setupLora() {
+
+  // Init radiolib
+  loraModule = new Module(config.loraPinCs, config.loraPinIrq, config.loraPinRst, RADIOLIB_NC);
+  radio = new SX1276(loraModule);
+
   // Init LORA SPI
-  SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
+  SPI.begin(config.loraPinSck, config.loraPinMiso, config.loraPinMosi, config.loraPinCs);
 
   // setup lora
-  setStatus(systemState, currentMethod);
-  radiolibState = radio.begin(
+  radiolibState = radio->begin(
     config.loraFrequency,
     config.loraBw,
     config.loraSf,
@@ -19,15 +23,18 @@ void setup_lora() {
     return;
   }
   // Enable AFC (Automatic Frequency Correction)
-  radio.setAFCBandwidth(config.loraAfcBandwidth);
-  radio.setAFC(config.loraAfc);
+  radio->setAFCBandwidth(config.loraAfcBandwidth);
+  radio->setAFC(config.loraAfc);
   // Enable CRC
-  radio.setCRC(config.loraCrc); 
-
+  radio->setCRC(config.loraCrc); 
+  
+  // setup receiver
+  radio->setPacketReceivedAction(onPacketRX);
+  enableRX();
 }
 
 void enableRX(void) {
-  radiolibState = radio.startReceive();
+  radiolibState = radio->startReceive();
   if ( doRadiolibState(radiolibState) ) {
     return;
   }
@@ -80,12 +87,12 @@ void decodePacket(void) {
   setStatus(IN_RX, "decodePacket()");
 
   String data;
-  rxState = radio.readData(data);
-  if (radio.getPacketLength() != 0) {
+  rxState = radio->readData(data);
+  if (radio->getPacketLength() != 0) {
     if (rxState == RADIOLIB_ERR_NONE) {
-      float freqErr = radio.getFrequencyError();
-      float rssi = radio.getRSSI();
-      float snr = radio.getSNR();
+      float freqErr = radio->getFrequencyError();
+      float rssi = radio->getRSSI();
+      float snr = radio->getSNR();
       
       // parse packet
       String receivedUsername;
@@ -153,7 +160,7 @@ void transmitPacket(void) {
   int m = millis() % 100;
   txMessage = String(config.user) + " " + padZeroRight(txPacketCount, 3) + " " + padZeroRight(m, 3) + " " + String(getLastSnr()); 
 
-  txState = radio.transmit(txMessage);
+  txState = radio->transmit(txMessage);
   enableRX();
   updateStatus();
 

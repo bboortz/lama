@@ -26,7 +26,7 @@ LoraPacket createPacket(PacketType type, uint8_t dst, uint8_t flags) {
 
 int transmitPacket(LoraPacket* pkt) {
   int len = sizeof(PacketHeader) + pkt->header.dataLen;
-  int state = radio.transmit((uint8_t*)pkt, len);
+  int state = radio->transmit((uint8_t*)pkt, len);
   
   Serial.printf("TX: type=%d dst=%d seq=%d len=%d\n",
                 pkt->header.type, pkt->header.dstNode,
