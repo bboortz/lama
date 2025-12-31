@@ -126,7 +126,7 @@ void decodePacket(void) {
       // add rx to history
       rxPacketCount++;
       lastRxTime = millis();
-      setNetworkState(CONNECTED);
+      setLoraNetworkState(CONNECTED);
       addToRxHistory(receivedUsername, receivedSeq, receivedMSecs, snr, rssi, freqErr, receivedSnr); 
      
     } else if (rxState == RADIOLIB_ERR_RX_TIMEOUT) {

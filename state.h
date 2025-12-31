@@ -9,7 +9,8 @@ int radiolibState = 0;
 int rxState = 0;
 int txState = 0;
 enum network_state_enum {LOST, CONNECTED};
-network_state_enum networkState = LOST;
+network_state_enum loraNetworkState = LOST;
+network_state_enum wifiNetworkState = LOST;
 String currentMethod = "setup";
 
 #endif

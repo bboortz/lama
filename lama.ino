@@ -14,15 +14,8 @@
 
 
 
-void setup_wifi() {
-
-
-}
-
-
-
-void setup_board() {
-  currentMethod = "setup_board()";
+void setupBoard() {
+  currentMethod = "setup()";
   systemState = INIT; 
   
   delay(1000);
@@ -38,7 +31,8 @@ void setup_board() {
   setupLora();
   delay(1000);
 
-  
+  //setupWifi();
+  //delay(1000);
 
   // setup done
   setStatus(READY, "loop()");
@@ -46,8 +40,10 @@ void setup_board() {
 }
 
 
+
+
 void setup() {
-  setup_board();
+  setupBoard();
 }
 
 
@@ -58,7 +54,7 @@ void loop() {
   switch ( systemState ) {
     case INIT:
       // Serial.println("* INIT");
-      setup_board();
+      setupBoard();
       break;
     
     case READY:
@@ -91,7 +87,7 @@ void loop() {
 
       if (lastRxTime > 0 && (millis() - lastRxTime > config.rxTimeout)) {
         // No packet received for 30 seconds
-        setNetworkState(LOST);
+        setLoraNetworkState(LOST);
       }
 
       if (millis() - lastTxTime > config.txInterval) {

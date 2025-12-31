@@ -18,22 +18,21 @@ void setupDisplay() {
 void updateStatus(void) {
   int totalExpected = rxPacketCount + rxPacketLost;
   int lossPercent = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
+  unsigned long rxAgo = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
 
   String header = getProgressStar() + " LAMA " + padRight(getProgressStar(), 14);
   String stateMessage = getState();
   String functionMessage = "F " + currentMethod;
-  String statsMessage = "R:" + String(rxPacketCount) + 
-                        " T:" + String(txPacketCount) + 
-                        " L:" + String(lossPercent) + "%";
-
-  //Serial.println(String(millis()) + " " + stateMessage + " " + statsMessage);
+  String statsMessage = padRight("R:" + String(rxPacketCount), 5) + " " +
+                        padRight("T:" + String(txPacketCount), 5) + " " +
+                        padRight("L:" + String(lossPercent) + "%", 5) + " " +
+                        padRight(String(rxAgo), 3);
 
   display->clearDisplay();
   display->setCursor(0, 0);
   display->println(header);
   display->println(stateMessage);
   display->println(statsMessage);
-  // display->println(functionMessage);
   display->println(txMessage);
 
   // Per-user signal quality
@@ -52,22 +51,6 @@ void updateStatus(void) {
             lossPct);
     display->println(line);
   }
-
-/*
-  // Display header for history
-  display.println("   User  ID SNR RSNR");
-  
-  // Display message history
-  for (int i = 0; i < rxHistoryCount; i++) {
-    char line[22];
-    sprintf(line, "%7s %03d %3.0f %4.0f",
-            rxHistory[i].user.substring(0, 6).c_str(),
-            rxHistory[i].seq % 1000,
-            rxHistory[i].snr,
-            rxHistory[i].rsnr);
-    display.println(line);
-  }
-  */
 
   display->display();
 }

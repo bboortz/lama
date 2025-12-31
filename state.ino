@@ -3,12 +3,11 @@ String getState() {
   if (radiolibState == 0 && rxState == 0 && txState == 0) {
     loraState = "OK";
   }
-  unsigned long rxAgo = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
 
   return padRight(getSystemState(), 5) + " " + 
          padRight(loraState, 5) + " " + 
-         padRight(getNetworkState(), 4) + " " +
-         padRight(String(rxAgo), 3); 
+         padRight("L:" + getLoraNetworkState(), 3) + " " +
+         padRight("W:" + getWifiNetworkState(), 3);
 }
 
 void setSystemState(system_state_enum stateobj) {
@@ -47,18 +46,36 @@ String getSystemState() {
   
 }
 
-void setNetworkState(network_state_enum stateobj) {
-  networkState = stateobj;
+void setLoraNetworkState(network_state_enum stateobj) {
+  loraNetworkState = stateobj;
 }
 
-String getNetworkState() {
+String getLoraNetworkState() {
 
-  switch ( networkState ) {
+  switch ( loraNetworkState ) {
     case LOST: 
-      return "LOST";
+      return "L";
     
     case CONNECTED:
-      return "CONN";
+      return "C";
+  }
+
+  return "FAILED";
+  
+}
+
+void setWifiNetworkState(network_state_enum stateobj) {
+  wifiNetworkState = stateobj;
+}
+
+String getWifiNetworkState() {
+
+  switch ( wifiNetworkState ) {
+    case LOST: 
+      return "L";
+    
+    case CONNECTED:
+      return "C";
   }
 
   return "FAILED";
