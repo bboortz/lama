@@ -6,16 +6,23 @@ void setupDisplay() {
   Wire.begin(config.oledPinSda, config.oledPinScl);
   // Wire.begin(DEFAULT_OLED_SDA, DEFAULT_OLED_SCL);
   if (display->begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    displayAvailable = true;
     display->clearDisplay();
     display->setTextSize(1);
     display->setTextColor(WHITE);
     display->setCursor(0, 0);
     setStatus(systemState, currentMethod);
+  } else {
+    displayAvailable = false;  // Mark as unavailable
+    Serial.println("WARNING: Display initialization failed!");
   }
+
 }
 
 
 void updateStatus(void) {
+  if (!displayAvailable) return;  // check if a display is available
+
   int totalExpected = rxPacketCount + rxPacketLost;
   int lossPercent = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
   unsigned long rxAgo = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
@@ -57,6 +64,13 @@ void updateStatus(void) {
 
 
 void displayError(String msg) {
+  setSystemState(FAILED);
+  
+  if (!displayAvailable) {
+    Serial.printf("ERROR (no display): %s\n", msg.c_str());
+    return;
+  }
+
   display->setCursor(0, 0);
   display->println(msg);
   display->display();

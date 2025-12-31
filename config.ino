@@ -32,7 +32,7 @@ void loadConfig() {
 
   // LoRa RF parameters
   config.loraFrequency = preferences.getFloat("loraFrequency", DEFAULT_LORA_FREQ);
-  config.loraBw = preferences.getInt("loraBw", DEFAULT_LORA_BW);
+  config.loraBw = preferences.getFloat("loraBw", DEFAULT_LORA_BW);
   config.loraSf = preferences.getInt("loraSf", DEFAULT_LORA_SF);
   config.loraCr = preferences.getInt("loraCr", DEFAULT_LORA_CR);
   config.loraSync = preferences.getInt("loraSync", DEFAULT_LORA_SYNC);
@@ -40,7 +40,7 @@ void loadConfig() {
   config.loraTxPower = preferences.getInt("loraTxPower", DEFAULT_LORA_TXPOWER);
   config.loraCrc = preferences.getInt("loraCrc", DEFAULT_LORA_CRC);
   config.loraAfc = preferences.getInt("loraAfc", DEFAULT_LORA_AFC);
-  config.loraAfcBandwidth = preferences.getInt("loraAfcBandwidth", DEFAULT_LORA_AFC_BANDWIDTH);
+  config.loraAfcBandwidth = preferences.getFloat("loraAfcBandwidth", DEFAULT_LORA_AFC_BANDWIDTH);
 
   // Timing
   config.txInterval = preferences.getInt("txInterval", DEFAULT_TX_INTERVAL);
@@ -85,7 +85,7 @@ void saveConfig() {
 
   // LoRa RF parameters
   preferences.putFloat("loraFrequency", config.loraFrequency);
-  preferences.putInt("loraBw", config.loraBw);
+  preferences.putFloat("loraBw", config.loraBw);
   preferences.putInt("loraSf", config.loraSf);
   preferences.putInt("loraCr", config.loraCr);
   preferences.putInt("loraSync", config.loraSync);
@@ -93,7 +93,7 @@ void saveConfig() {
   preferences.putInt("loraTxPower", config.loraTxPower);
   preferences.putInt("loraCrc", config.loraCrc);
   preferences.putInt("loraAfc", config.loraAfc);
-  preferences.putInt("loraAfcBandwidth", config.loraAfcBandwidth);
+  preferences.putFloat("loraAfcBandwidth", config.loraAfcBandwidth);
 
   // Timing
   preferences.putInt("txInterval", config.txInterval);
@@ -142,7 +142,7 @@ void printConfig() {
   
   Serial.println("\nLoRa RF Parameters:");
   Serial.printf("  Frequency:      %.1f MHz\n", config.loraFrequency);
-  Serial.printf("  Bandwidth:      %d kHz\n", config.loraBw);
+  Serial.printf("  Bandwidth:      %.1f kHz\n", config.loraBw);
   Serial.printf("  SF:             %d\n", config.loraSf);
   Serial.printf("  CR:             4/%d\n", config.loraCr);
   Serial.printf("  Sync Word:      0x%02X\n", config.loraSync);
@@ -150,7 +150,7 @@ void printConfig() {
   Serial.printf("  TX Power:       %d dBm\n", config.loraTxPower);
   Serial.printf("  CRC:            %s\n", config.loraCrc ? "ON" : "OFF");
   Serial.printf("  AFC:            %s\n", config.loraAfc ? "ON" : "OFF");
-  Serial.printf("  AFC Bandwidth:  %d kHz\n", config.loraAfcBandwidth);
+  Serial.printf("  AFC Bandwidth:  %.1f kHz\n", config.loraAfcBandwidth);
   
   Serial.println("\nTiming:");
   Serial.printf("  TX Interval:    %d ms\n", config.txInterval);
@@ -321,13 +321,13 @@ void handleSerialCommand() {
     }
     
   } else if (command == "bw" && value.length() > 0) {
-    int bw = value.toInt();
-    if (bw == 7800 || bw == 10400 || bw == 15600 || bw == 20800 || 
-        bw == 31250 || bw == 41700 || bw == 62500 || bw == 125000 || 
-        bw == 250000 || bw == 500000) {
+    float bw = value.toFloat();
+    if (bw == 7.800 || bw == 10.400 || bw == 15.600 || bw == 20.800 || 
+        bw == 31.250 || bw == 41.700 || bw == 62.500 || bw == 125.000 || 
+        bw == 250.000 || bw == 500.000) {
       config.loraBw = bw;
       saveConfig();
-      Serial.printf("Bandwidth set to: %d Hz (reboot required)\n", config.loraBw);
+      Serial.printf("Bandwidth set to: %f kHz (reboot required)\n", config.loraBw);
     } else {
       Serial.println("Error: Invalid bandwidth (use 125, 250, 500 for kHz)");
     }
@@ -400,9 +400,9 @@ void handleSerialCommand() {
     Serial.printf("AFC set to: %s (reboot required)\n", config.loraAfc ? "ON" : "OFF");
     
   } else if (command == "afcbw" && value.length() > 0) {
-    config.loraAfcBandwidth = value.toInt();
+    config.loraAfcBandwidth = value.toFloat();
     saveConfig();
-    Serial.printf("AFC Bandwidth set to: %d kHz (reboot required)\n", config.loraAfcBandwidth);
+    Serial.printf("AFC Bandwidth set to: %f kHz (reboot required)\n", config.loraAfcBandwidth);
     
   // ========== Timing ==========
   } else if (command == "txint" && value.length() > 0) {

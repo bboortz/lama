@@ -1,10 +1,15 @@
-
+/*
+todos
+* wifi
+* packet
+*/
 #include <SPI.h>
 #include <Wire.h>
 #include <WiFi.h>
 
 #include "config.h"
 #include "state.h"
+#include "serial.h"
 #include "display.h"
 #include "lora.h"
 #include "packet.h"
@@ -17,14 +22,14 @@
 void setupBoard() {
   currentMethod = "setup()";
   systemState = INIT; 
-  
   delay(1000);
-  Serial.begin(115200);
-  while (!Serial);
 
   // Load config BEFORE radio setup
   loadConfig();
- 
+  
+  setupSerial();
+  delay(1000);
+
   setupDisplay();
   delay(1000);
 

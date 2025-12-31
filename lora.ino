@@ -4,7 +4,15 @@ void setupLora() {
 
   // Init radiolib
   loraModule = new Module(config.loraPinCs, config.loraPinIrq, config.loraPinRst, RADIOLIB_NC);
+  if (!loraModule) {
+    displayError("LoRa module alloc failed!");
+    return;
+  }
   radio = new SX1276(loraModule);
+  if (!radio) {
+      displayError("Failed to allocate SX1276 radio!");
+      return;
+  }
 
   // Init LORA SPI
   SPI.begin(config.loraPinSck, config.loraPinMiso, config.loraPinMosi, config.loraPinCs);
@@ -55,7 +63,7 @@ void parsePacket(String data, String *user, int *seq, int *msecs, float *rsnr) {
     data.toCharArray(buffer, sizeof(buffer));
     char userBuf[32];
     
-    int result = sscanf(buffer, "%s %d %d %f", userBuf, seq, msecs, rsnr);
+    int result = sscanf(buffer, "%31s %d %d %f", userBuf, seq, msecs, rsnr);
 
     if (result == 4) {
         // Format: user seq milliseconds rsnr
@@ -112,17 +120,17 @@ void decodePacket(void) {
         }
         stats->lastSeq = receivedSeq;
         stats->received++;
-      }
+      
+        // Update signal stats for this user
+        updateUserSignalStats(stats, rssi, snr, freqErr);
+          
+        // Warn on degrading signal
+        if (stats->received > 10 && rssi < stats->avgRssi - 10) {
+          Serial.printf("WARNING: %s signal degraded by %.0f dB!\n", 
+                        stats->name.c_str(), stats->avgRssi - rssi);
+        }
 
-      // Update signal stats for this user
-      updateUserSignalStats(stats, rssi, snr, freqErr);
-        
-      // Warn on degrading signal
-      if (stats->received > 10 && rssi < stats->avgRssi - 10) {
-        Serial.printf("WARNING: %s signal degraded by %.0f dB!\n", 
-                      stats->name.c_str(), stats->avgRssi - rssi);
       }
-
       // add rx to history
       rxPacketCount++;
       lastRxTime = millis();
@@ -140,6 +148,7 @@ void decodePacket(void) {
 
     }
     
+    enableRX();
     updateStatus();
       
   }
