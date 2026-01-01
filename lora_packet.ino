@@ -73,8 +73,9 @@ void handleLoraBeat(LoraPacket pkt, size_t pktLength) {
   // Loss detection
   UserStats* stats = findOrCreateUser(String(pkt.header.src.node));
   if (stats) {
-    if (stats->lastSeq >= 0 && pkt.header.seq > stats->lastSeq + 1) {
-      int lost = pkt.header.seq - stats->lastSeq - 1;
+    uint16_t seqDiff = pkt.header.seq - (uint16_t)stats->lastSeq;
+    if (stats->received > 0 && seqDiff > 1 && seqDiff < 1000) {  // 1000 = sanity check
+      int lost = seqDiff - 1;
       stats->lost += lost;
       rxPacketLost += lost;
       addError("Packet lost");

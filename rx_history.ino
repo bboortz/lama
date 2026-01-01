@@ -36,7 +36,7 @@ UserStats* findOrCreateUser(String name) {
   // Create new
   if (userCount < MAX_USERS) {
     userStats[userCount].name        = name;
-    userStats[userCount].lastSeq     = 0;
+    userStats[userCount].lastSeq     = -1;
     userStats[userCount].received    = 0;
     userStats[userCount].lost        = 0;
     userStats[userCount].lastRssi    = 0;

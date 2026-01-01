@@ -39,9 +39,9 @@ void displayStatusHeader(void) {
     return;  // check if a display is available
   }
 
-  uint8_t           totalExpected = rxPacketCount + rxPacketLost;
-  uint8_t           lossPercent   = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
-  uint16_t rxAgo         = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
+  uint32_t           totalExpected = rxPacketCount + rxPacketLost;
+  uint32_t           lossPercent   = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
+  uint32_t rxAgo         = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
 
   String header       = getProgressStar() + " LAMA " + txMessage + padRight(getProgressStar(), 3);
   String stateMessage = getState();
