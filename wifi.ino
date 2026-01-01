@@ -246,7 +246,6 @@ void handleWifi() {
   }
 }
 
-
 String getWifiStatus() {
   switch (WiFi.status()) {
     case WL_IDLE_STATUS:
