@@ -39,8 +39,8 @@ void displayStatusHeader(void) {
     return;  // check if a display is available
   }
 
-  uint32_t           totalExpected = rxPacketCount + rxPacketLost;
-  uint32_t           lossPercent   = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
+  uint32_t totalExpected = rxPacketCount + rxPacketLost;
+  uint32_t lossPercent   = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
   uint32_t rxAgo         = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
 
   String header       = getProgressStar() + " LAMA " + txMessage + padRight(getProgressStar(), 3);
@@ -77,14 +77,20 @@ void displayStatus(void) {
         int        total   = s->received + s->lost;
         int        lossPct = (total > 0) ? (100 * s->lost / total) : 0;
 
+        char nameBuffer[7];
+        strncpy(nameBuffer, s->name.c_str(), 6);
+        nameBuffer[6] = '\0';
+
         char line[22];
-        sprintf(line,
-                "%5s %03d %4.0f %3.0f %2d",
-                s->name.substring(0, 6).c_str(),
-                s->lastSeq % 1000,
-                s->avgSnr,
-                s->lastSnr,
-                lossPct);
+        snprintf(line,
+                 sizeof(line),
+                 "%5.5s %03d %4.0f %3.0f %2d",
+                 nameBuffer,
+                 s->lastSeq % 1000,
+                 s->avgSnr,
+                 s->lastSnr,
+                 lossPct);
+
         display->println(line);
       }
     }

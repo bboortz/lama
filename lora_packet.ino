@@ -87,7 +87,7 @@ void handleLoraBeat(LoraPacket pkt, size_t pktLength) {
     updateUserSignalStats(stats, rssi, snr, freqErr);
 
     if (stats->received > 10 && rssi < stats->avgRssi - 10) {
-      addError("Signal degraged");
+      addError("Signal degraded");
       Serial.printf("WARNING: %s signal degraded by %.0f dB!\n",
                     stats->name.c_str(),
                     stats->avgRssi - rssi);

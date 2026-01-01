@@ -99,10 +99,10 @@ void handleSerialCommand() {
     } else if (command == "announce") {
       cmdAnnounce(value);
       */
-      /*
-  } else if (command == "nodes") {
-    cmdNodes(value);
-    */
+    /*
+} else if (command == "nodes") {
+  cmdNodes(value);
+  */
   } else if (command == "users" || command == "stats") {
     printUserStats();
   } else if (command == "show" || command == "config") {
