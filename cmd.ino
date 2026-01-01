@@ -444,6 +444,7 @@ void cmdWifiCommand(String value) {
 }
 
 // Network Commands
+/*
 void cmdPing(String value) {
   if (value.length() == 0) {
     Serial.println("Error: Value required");
@@ -468,10 +469,12 @@ void cmdAnnounce(String value) {
   sendAnnounce();
   Serial.println("Announce broadcast sent");
 }
-
+*/
+/*
 void cmdNodes(String value) {
   printNodes();
 }
+*/
 
 // Statistics and Info
 void cmdMemory(String value) {

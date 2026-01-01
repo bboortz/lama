@@ -4,12 +4,14 @@ void setupLora() {
   // Init radiolib
   loraModule = new Module(config.loraPinCs, config.loraPinIrq, config.loraPinRst, RADIOLIB_NC);
   if (!loraModule) {
-    displayError("LoRa module alloc failed!");
+    addError("LoRa module alloc failed!");
+    setStatus(FATAL);
     return;
   }
   radio = new SX1276(loraModule);
   if (!radio) {
-    displayError("Failed to allocate SX1276 radio!");
+    addError("Failed to allocate SX1276 radio!");
+    setStatus(FATAL);
     return;
   }
 
@@ -24,7 +26,9 @@ void setupLora() {
                                config.loraSync,
                                config.loraTxPower,  // output power (not used for RX)
                                config.loraPreamble);
-  if (doRadiolibState(radiolibState)) {
+  if (handleRadiolibState(radiolibState)) {
+    addError("Lora setup error");
+    setStatus(FATAL);
     return;
   }
   // Enable AFC (Automatic Frequency Correction)
@@ -38,9 +42,22 @@ void setupLora() {
   enableRX();
 }
 
+void checkLoraState() {
+  if (lastRxTime > 0 && (millis() - lastRxTime > config.rxTimeout)) {
+    // No packet received for 30 seconds
+    setLoraNetworkState(LOST);
+  }
+
+  if (millis() - lastTxTime > config.txInterval) {
+    setSystemState(DO_TX);
+  }
+}
+
 void enableRX(void) {
   radiolibState = radio->startReceive();
-  if (doRadiolibState(radiolibState)) {
+  if (handleRadiolibState(radiolibState)) {
+    addError("receiver error");
+    setStatus(FATAL);
     return;
   }
 }
@@ -53,18 +70,26 @@ void onPacketRX(void) {
   setSystemState(DO_RX);
 }
 
-void handleRxError(int errorCode) {
-  switch (errorCode) {
-    case RADIOLIB_ERR_RX_TIMEOUT:
-      Serial.println("RX Timeout!");
-      break;
-    case RADIOLIB_ERR_CRC_MISMATCH:
-      Serial.println("CRC error!");
-      break;
-    default:
-      Serial.printf("Receive failed, error: %d\n", errorCode);
-      break;
+int handleRadiolibState(int state) {
+  if (state != RADIOLIB_ERR_NONE) {
+    setSystemState(ERROR);
+
+    String msg;
+    switch (state) {
+      case RADIOLIB_ERR_RX_TIMEOUT:
+        msg = "RX Timeout!";
+        break;
+      case RADIOLIB_ERR_CRC_MISMATCH:
+        msg = "CRC error!";
+        break;
+      default:
+        msg = "Receive failed, error: " + String(state);
+        break;
+    }
+    addError(msg);
   }
+
+  return state;
 }
 
 void receivePacket(void) {
@@ -76,7 +101,7 @@ void receivePacket(void) {
   decodeLoraPacket();
 
   enableRX();
-  updateStatus();
+  displayStatus();
 
   setStatus(IDLE);
 }
@@ -90,13 +115,10 @@ void transmitPacket(void) {
   lastTxTime = millis();
 
   // Build message
-  int m     = millis() % 100;
-  txMessage = String(config.user) + " " + padZeroRight(txPacketCount, 3) + " " + padZeroRight(m, 3)
-              + " " + String(getLastSnr());
+  txState = sendLoraBeat();
 
-  txState = radio->transmit(txMessage);
   enableRX();
-  updateStatus();
+  displayStatus();
 
   setStatus(IDLE);
 }

@@ -91,14 +91,18 @@ void handleSerialCommand() {
     cmdWifiEnable(value);
   } else if (command == "wifiCommand") {
     cmdWifiCommand(value);
-  } else if (command == "ping") {
-    cmdPing(value);
-  } else if (command == "discover") {
-    cmdDiscover(value);
-  } else if (command == "announce") {
-    cmdAnnounce(value);
+    /*
+    } else if (command == "ping") {
+      cmdPing(value);
+    } else if (command == "discover") {
+      cmdDiscover(value);
+    } else if (command == "announce") {
+      cmdAnnounce(value);
+      */
+      /*
   } else if (command == "nodes") {
     cmdNodes(value);
+    */
   } else if (command == "users" || command == "stats") {
     printUserStats();
   } else if (command == "show" || command == "config") {

@@ -18,17 +18,33 @@ void setupDisplay() {
   }
 }
 
-void updateStatus(void) {
+void addError(String msg) {
+  // Shift older messages down
+  for (int i = ERROR_HISTORY_SIZE - 1; i > 0; i--) {
+    errorHistory[i] = errorHistory[i - 1];
+  }
+
+  // Add new message at top
+  errorHistory[0] = msg;
+
+  if (errorHistoryCount < ERROR_HISTORY_SIZE) {
+    errorHistoryCount++;
+  }
+
+  setSystemState(ERROR);
+}
+
+void displayStatusHeader(void) {
   if (!displayAvailable) {
     return;  // check if a display is available
   }
 
-  int           totalExpected = rxPacketCount + rxPacketLost;
-  int           lossPercent   = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
-  unsigned long rxAgo         = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
+  uint8_t           totalExpected = rxPacketCount + rxPacketLost;
+  uint8_t           lossPercent   = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
+  uint16_t rxAgo         = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
 
-  String header          = getProgressStar() + " LAMA " + padRight(getProgressStar(), 14);
-  String stateMessage    = getState();
+  String header       = getProgressStar() + " LAMA " + txMessage + padRight(getProgressStar(), 3);
+  String stateMessage = getState();
   String functionMessage = "F " + currentMethod;
   String statsMessage    = padRight("R:" + String(rxPacketCount), 5) + " "
                         + padRight("T:" + String(txPacketCount), 5) + " "
@@ -40,38 +56,56 @@ void updateStatus(void) {
   display->println(header);
   display->println(stateMessage);
   display->println(statsMessage);
-  display->println(txMessage);
+}
 
-  // Per-user signal quality
-  display->println("      User SEQ SNR L%");
-  for (int i = 0; i < userCount && i < 3; i++) {
-    UserStats* s       = &userStats[i];
-    int        total   = s->received + s->lost;
-    int        lossPct = (total > 0) ? (100 * s->lost / total) : 0;
+void displayStatus(void) {
+  if (!displayAvailable) {
+    return;  // check if a display is available
+  }
 
-    char line[22];
-    sprintf(line,
-            "%10s %03d %3.0f %2d",
-            s->name.substring(0, 6).c_str(),
-            s->lastSeq % 1000,
-            // s->avgRssi,
-            s->avgSnr,
-            lossPct);
-    display->println(line);
+  displayStatusHeader();
+
+  if (systemState != FATAL) {
+    display->println(errorHistory[0]);
+
+    // Per-user signal quality
+
+    if (userCount > 0) {
+      display->println(" Node SEQ ASNR SNR L%");
+      for (int i = 0; i < userCount && i < 3; i++) {
+        UserStats* s       = &userStats[i];
+        int        total   = s->received + s->lost;
+        int        lossPct = (total > 0) ? (100 * s->lost / total) : 0;
+
+        char line[22];
+        sprintf(line,
+                "%5s %03d %4.0f %3.0f %2d",
+                s->name.substring(0, 6).c_str(),
+                s->lastSeq % 1000,
+                s->avgSnr,
+                s->lastSnr,
+                lossPct);
+        display->println(line);
+      }
+    }
+  } else {
+    display->println(currentMethod);
+    display->println("RL:" + String(radiolibState) + " RX:" + String(rxState)
+                     + " TX:" + String(txState));
+    displayAllErrors();
   }
 
   display->display();
 }
 
-void displayError(String msg) {
-  setSystemState(FAILED);
-
+void displayAllErrors(void) {
   if (!displayAvailable) {
-    Serial.printf("ERROR (no display): %s\n", msg.c_str());
-    return;
+    return;  // check if a display is available
   }
 
-  display->setCursor(0, 0);
-  display->println(msg);
+  for (int i = 0; i < ERROR_HISTORY_SIZE; i++) {
+    display->println(errorHistory[i]);
+  }
+
   display->display();
 }

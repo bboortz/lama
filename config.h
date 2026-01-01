@@ -41,6 +41,18 @@
 #define DEFAULT_WIFI_ENABLED true
 #define DEFAULT_WIFI_HOSTNAME "lama"
 
+// Node capabilities bitmask
+enum ConfigNodeCapa : uint8_t {
+  CAPA_RX      = 0x01,
+  CAPA_TX      = 0x02,
+  CAPA_RELAY   = 0x04,
+  CAPA_GATEWAY = 0x08,
+  CAPA_GPS     = 0x10,
+  CAPA_SENSORS = 0x20,
+  CAPA_BATTERY = 0x40,
+  CAPA_MAINS   = 0x80,
+};
+
 // Config structure
 struct Config {
   uint8_t nodeId;

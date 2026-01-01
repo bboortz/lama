@@ -104,6 +104,7 @@ void setupWebServer() {
   });
 
   // Known nodes
+  /*
   server->on("/api/nodes", HTTP_GET, []() {
     String json = "[";
     for (int i = 0; i < nodeCount; i++) {
@@ -130,6 +131,7 @@ void setupWebServer() {
     json += "]";
     server->send(200, "application/json", json);
   });
+  */
 
   // RX History
   server->on("/api/history", HTTP_GET, []() {

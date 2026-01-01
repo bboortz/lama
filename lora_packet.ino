@@ -1,72 +1,243 @@
 
-ParsedLoraPacket parseLoraPacket(String data) {
-  ParsedLoraPacket result = {"", 0, 0, 0.0};
+void printLoraPacket(LoraPacket pkt, size_t pktLength) {
+  LoraPacketBeatPayload p = {};
+  memcpy(&p, pkt.payload, sizeof(LoraPacketBeatPayload));
 
-  char buffer[64];
-  data.toCharArray(buffer, sizeof(buffer));
+  Serial.printf(
+      "pktLength: %u - "
+      "ver: %u type: %u seq: %u node: %u payloadLen: %u msecs: %u rsnr: %.2f\n",
+      (unsigned)pktLength,
+      pkt.header.version,
+      pkt.header.type,
+      pkt.header.seq,
+      pkt.header.src.node,
+      pkt.header.payloadLen,
+      p.msecs,
+      p.rsnr);
+}
 
-  char userBuf[32];
-  int  scanResult =
-      sscanf(buffer, "%31s %d %d %f", userBuf, &result.seq, &result.msecs, &result.rsnr);
-
-  if (strlen(userBuf) > 0) {
-    result.user = String(userBuf);
+bool validateLoraPacket(const LoraPacket& pkt, size_t pktLength) {
+  // Check magic number FIRST - don't trust other fields if magic is wrong
+  if (pkt.header.magic != LORA_PACKET_MAGIC) {
+    return false;
   }
 
-  return result;
+  // Check version
+  if (pkt.header.version != LORA_PACKET_VERSION) {
+    return false;
+  }
+
+  // Minimum size check
+  if (pktLength < LORA_HEADER_SIZE) {
+    return false;
+  }
+
+  // Maximum size check
+  if (pktLength > LORA_PACKET_MAXLENGTH) {
+    return false;
+  }
+
+  // Payload size sanity
+  if (pkt.header.payloadLen > LORA_MAX_PAYLOAD) {
+    return false;
+  }
+
+  // Validate actual packet size matches header + declared payload
+  size_t expectedLen = LORA_HEADER_SIZE + pkt.header.payloadLen;
+  if (pktLength != expectedLen) {
+    Serial.printf("Packet length mismatch: expected %u, got %u\n",
+                  (unsigned)expectedLen,
+                  (unsigned)pktLength);
+    return false;
+  }
+
+  // Type-specific payload validation
+  if (pkt.header.type == PKT_BEAT && pkt.header.payloadLen != LORA_BEAT_PAYLOAD_SIZE) {
+    return false;
+  }
+
+  return true;
+}
+
+void handleLoraBeat(LoraPacket pkt, size_t pktLength) {
+  float freqErr = radio->getFrequencyError();
+  float rssi    = radio->getRSSI();
+  float snr     = radio->getSNR();
+
+  // LoraPacketBeatPayload* p = (LoraPacketBeatPayload*)pkt.payload;
+  LoraPacketBeatPayload p = {};
+  memcpy(&p, pkt.payload, sizeof(LoraPacketBeatPayload));
+
+  printLoraPacket(pkt, pktLength);
+
+  // Loss detection
+  UserStats* stats = findOrCreateUser(String(pkt.header.src.node));
+  if (stats) {
+    if (stats->lastSeq >= 0 && pkt.header.seq > stats->lastSeq + 1) {
+      int lost = pkt.header.seq - stats->lastSeq - 1;
+      stats->lost += lost;
+      rxPacketLost += lost;
+      addError("Packet lost");
+      Serial.printf("*** LOST %d packets!\n", lost);
+    }
+    stats->lastSeq = pkt.header.seq;
+    stats->received++;
+
+    updateUserSignalStats(stats, rssi, snr, freqErr);
+
+    if (stats->received > 10 && rssi < stats->avgRssi - 10) {
+      addError("Signal degraged");
+      Serial.printf("WARNING: %s signal degraded by %.0f dB!\n",
+                    stats->name.c_str(),
+                    stats->avgRssi - rssi);
+    }
+  }
+
+  setLoraNetworkState(CONNECTED);
+
+  addToRxHistory(String(pkt.header.src.node), pkt.header.seq, p.msecs, snr, rssi, freqErr, p.rsnr);
+
+  // NodeInfo* node = findNode(pkt->header.srcNode);
+  /*
+   if (node) {
+     Serial.printf("Beat from %s: bat=%dmV rssi=%d uptime=%dh\n",
+                   node->name,
+                   p->battery,
+                   p->rssi,
+                   p->uptime);
+   }
+   */
+}
+
+LoraPacket parseLoraPacket(const uint8_t* data, size_t pktLength) {
+  LoraPacket pkt = createEmptyPacket();
+
+  // Minimum size check
+  if (pktLength < sizeof(LoraPacketHeader)) {
+    addError("packet too small");
+    return pkt;
+  }
+
+  // Copy header only
+  memcpy(&pkt.header, data, sizeof(LoraPacketHeader));
+
+  // Validate header & length
+  if (!validateLoraPacket(pkt, pktLength)) {
+    addError("wrong packet parsed");
+    return pkt;
+  }
+
+  // Copy payload safely
+  memcpy(pkt.payload, data + sizeof(LoraPacketHeader), pkt.header.payloadLen);
+
+  return pkt;
 }
 
 void decodeLoraPacket(void) {
-  String data;
-  rxState = radio->readData(data);
+  // String data;
+  uint8_t data[64];
+  rxState = radio->readData(data, 64);
+  if (handleRadiolibState(rxState)) {
+    return;
+  }
 
-  if (radio->getPacketLength() != 0) {
-    if (rxState == RADIOLIB_ERR_NONE) {
-      float freqErr = radio->getFrequencyError();
-      float rssi    = radio->getRSSI();
-      float snr     = radio->getSNR();
+  size_t pktLength = radio->getPacketLength();
+  if (pktLength > 0) {
+    // Parse packet - much cleaner!
+    LoraPacket packet = parseLoraPacket(data, pktLength);
+    // printLoraPacket(packet, pktLength);
 
-      // Parse packet - much cleaner!
-      ParsedLoraPacket packet = parseLoraPacket(data);
-
-      // Loss detection
-      UserStats* stats = findOrCreateUser(packet.user);
-      if (stats) {
-        if (stats->lastSeq >= 0 && packet.seq > stats->lastSeq + 1) {
-          int lost = packet.seq - stats->lastSeq - 1;
-          stats->lost += lost;
-          rxPacketLost += lost;
-          Serial.printf("*** LOST %d packets!\n", lost);
-        }
-        stats->lastSeq = packet.seq;
-        stats->received++;
-
-        updateUserSignalStats(stats, rssi, snr, freqErr);
-
-        if (stats->received > 10 && rssi < stats->avgRssi - 10) {
-          Serial.printf("WARNING: %s signal degraded by %.0f dB!\n",
-                        stats->name.c_str(),
-                        stats->avgRssi - rssi);
-        }
-      }
-
-      rxPacketCount++;
-      lastRxTime = millis();
-      setLoraNetworkState(CONNECTED);
-      addToRxHistory(packet.user, packet.seq, packet.msecs, snr, rssi, freqErr, packet.rsnr);
-
-    } else {
-      handleRxError(rxState);
-    }
+    rxPacketCount++;
+    lastRxTime = millis();
+    handleLoraBeat(packet, pktLength);
   }
 }
 
-ParsedLoraPacket createLoraPacket(String user, int seq, int msecs, float rsnr) {
-  ParsedLoraPacket result = {"", 0, 0, 0.0};
-  result.user             = user;
-  result.seq              = seq;
-  result.msecs            = msecs;
-  result.rsnr             = rsnr;
+int transmitLoraPacket(LoraPacket* pkt) {
+  size_t len = sizeof(LoraPacketHeader) + pkt->header.payloadLen;
 
-  return result;
+  // Validate packet
+  if (!validateLoraPacket(*pkt, len)) {  // <-- dereference pointer
+    addError("wrong TX packet");
+    return 1;
+  }
+
+  txState = radio->transmit((uint8_t*)pkt, len);
+  if (handleRadiolibState(txState)) {
+    return txState;
+  }
+
+  printLoraPacket(*pkt, len);
+  /*
+  // Cast payload for printing if it's a Beat payload
+  if (pkt->header.payloadLen == sizeof(LoraPacketBeatPayload)) {
+    LoraPacketBeatPayload* p = reinterpret_cast<LoraPacketBeatPayload*>(pkt->payload);
+
+    char buf[64];
+    snprintf(buf,
+             sizeof(buf),
+             "%u %u %u %u %u %.2f",
+             pkt->header.type,
+             pkt->header.seq,
+             pkt->header.src.node,
+             pkt->header.payloadLen,
+             p->msecs,
+             p->rsnr);
+    txMessage = String(buf);
+  }*/
+
+  LoraPacketBeatPayload p = {};
+  memcpy(&p, pkt->payload, sizeof(LoraPacketBeatPayload));
+  txMessage = padRight("S:" + String(txPacketCount), 5) + " " + padRight("M:" + String(p.msecs), 5);
+
+  return txState;
+}
+
+LoraPacket createLoraPacket(LoraPacketType        type,
+                            uint8_t               nodeId,
+                            uint16_t              seq,
+                            LoraPacketBeatPayload payload) {
+  LoraPacketNode   src = {nodeId};
+  LoraPacketHeader header =
+      {LORA_PACKET_MAGIC, LORA_PACKET_VERSION, type, seq, src, sizeof(LoraPacketBeatPayload)};
+  LoraPacket pkt = {header};
+
+  memcpy(pkt.payload, &payload, sizeof(payload));
+
+  size_t actualSize = sizeof(LoraPacketHeader) + pkt.header.payloadLen;
+  if (!validateLoraPacket(pkt, actualSize)) {
+    addError("wrong packet creation");
+  }
+
+  return pkt;
+}
+
+LoraPacket createLoraBeatPacket(uint8_t nodeId, uint16_t seq, uint16_t msecs, float rsnr) {
+  LoraPacketBeatPayload payload = {msecs, rsnr};
+  LoraPacket            pkt     = createLoraPacket(PKT_BEAT, nodeId, seq, payload);
+  return pkt;
+}
+
+LoraPacket createEmptyPacket() {
+  uint8_t          seq        = 0;
+  size_t           payloadLen = 0;
+  LoraPacketType   type       = {PKT_EMPTY};
+  LoraPacketNode   src        = {0};
+  LoraPacketHeader header = {LORA_PACKET_MAGIC, LORA_PACKET_VERSION, type, seq, src, payloadLen};
+  LoraPacket       pkt    = {header};
+
+  size_t actualSize = sizeof(LoraPacketHeader) + pkt.header.payloadLen;
+  if (!validateLoraPacket(pkt, actualSize)) {
+    addError("wrong empty packet");
+  }
+
+  return pkt;
+}
+
+int sendLoraBeat() {
+  int        m   = millis() % 100;
+  LoraPacket pkt = createLoraBeatPacket(config.nodeId, txPacketCount, m, getLastSnr());
+
+  txState = transmitLoraPacket(&pkt);
+  return txState;
 }

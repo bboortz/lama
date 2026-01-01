@@ -6,14 +6,15 @@
 
 // State
 enum SystemStateEnum : uint8_t {
-  INIT   = 0x00,
-  READY  = 0x01,
-  DO_RX  = 0x02,
-  DO_TX  = 0x03,
-  IN_RX  = 0x04,
-  IN_TX  = 0x05,
-  IDLE   = 0x06,
-  FAILED = 0x07
+  INIT  = 0x00,
+  READY = 0x01,
+  DO_RX = 0x02,
+  DO_TX = 0x03,
+  IN_RX = 0x04,
+  IN_TX = 0x05,
+  IDLE  = 0x06,
+  ERROR = 0x07,
+  FATAL = 0x09,
 };
 SystemStateEnum systemState = INIT;
 

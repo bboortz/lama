@@ -1,6 +1,6 @@
 /*
 todos
-* packet
+* packet handler
 * command handler
 */
 #include <SPI.h>
@@ -12,7 +12,6 @@ todos
 #include "display.h"
 #include "lora.h"
 #include "lora_packet.h"
-#include "packet.h"
 #include "rx_history.h"
 #include "serial.h"
 #include "state.h"
@@ -48,7 +47,7 @@ void setup() {
 }
 
 void loop() {
-  updateStatus();
+  displayStatus();
   handleSerialCommand();
   handleWifi();
 
@@ -73,20 +72,21 @@ void loop() {
       //    case IN_TX:
 
     case IDLE:
-      if (lastRxTime > 0 && (millis() - lastRxTime > config.rxTimeout)) {
-        // No packet received for 30 seconds
-        setLoraNetworkState(LOST);
-      }
-
-      if (millis() - lastTxTime > config.txInterval) {
-        setSystemState(DO_TX);
-      }
+      checkLoraState();
 
       break;
 
-    case FAILED:
-      Serial.printf("Failed! Error code: %d\n", systemState);
-      displayError("INIT FAILED!");
+    case ERROR:
+      Serial.printf("ERROR! Error code: %d\n", systemState);
+      displayStatus();
+
+      checkLoraState();
+
+      break;
+
+    case FATAL:
+      Serial.printf("FATAL! Error code: %d\n", systemState);
+      displayStatus();
       while (true) {
         ;
       }

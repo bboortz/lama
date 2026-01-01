@@ -36,11 +36,14 @@ String getSystemState() {
     case IDLE:
       return "IDLE";
 
-    case FAILED:
-      return "FAILED";
+    case ERROR:
+      return "ERROR";
+
+    case FATAL:
+      return "FATAL";
   }
 
-  return "FAILED";
+  return "FATAL";
 }
 
 void setLoraNetworkState(NetworkStateEnum stateobj) {
@@ -75,17 +78,8 @@ String getWifiNetworkState() {
   return "FAILED";
 }
 
-int doRadiolibState(int state) {
-  if (state != RADIOLIB_ERR_NONE) {
-    setSystemState(FAILED);
-    return 1;
-  }
-
-  return 0;
-}
-
 void setStatusInternal(SystemStateEnum newState, const char* newMethod) {
   setSystemState(newState);
   currentMethod = (String)newMethod;
-  updateStatus();
+  displayStatus();
 }

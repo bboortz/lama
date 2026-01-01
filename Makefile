@@ -33,7 +33,7 @@ help:                     ## printing out the help
 
 format:                   ## formatting all files
 	@echo "Formatting code..."
-	@find . -maxdepth 2 \( -name "*.ino" -o -name "*.h" -o -name "*.cpp" \) \
+	@find . -maxdepth 1 \( -name "*.ino" -o -name "*.h" -o -name "*.cpp" \) \
 	  | xargs clang-format -i --verbose
 
 braces:			  ## add braces to all files
@@ -84,7 +84,7 @@ lint:	                   ## lint
 	@cppcheck --enable=all --std=c++11 --platform=avr8 \
 	  --suppressions-list=cppcheck-suppressions.txt \
 	  --language=c++ \
-	  --file-list=<(find . -name "*.ino" -o -name "*.cpp" -o -name "*.h")
+	  --file-list=<(find . -maxdepth 1 -name "*.ino" -o -name "*.cpp" -o -name "*.h")
 
 all: check-all format lint    ## all
 	@echo "All checks complete!"

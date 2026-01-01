@@ -12,7 +12,7 @@ Module* loraModule = nullptr;
 SX1276* radio      = nullptr;
 
 // RX TX intervals
-unsigned long lastTxTime = 0;
-unsigned long lastRxTime = 0;
+uint32_t lastTxTime = 0;
+uint32_t lastRxTime = 0;
 
 #endif

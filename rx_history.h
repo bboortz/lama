@@ -2,17 +2,14 @@
 #ifndef RX_HISTORY_H
 #define RX_HISTORY_H
 
-// last tx message
-String txMessage = "-";
-
 // Message history structure
-int rxPacketLost  = 0;
-int rxPacketCount = 0;
-int txPacketCount = 0;
+uint16_t rxPacketLost  = 0;
+uint16_t rxPacketCount = 0;
+uint16_t txPacketCount = 0;
 struct RxMessage {
   String user;
-  int    seq;    // message id
-  int    msecs;  // milliseconds
+  uint16_t    seq;    // message id
+  uint16_t    msecs;  // milliseconds
   float  snr;    // SNR we measured when receiving
   float  rssi;
   float  freqErr;
@@ -26,9 +23,9 @@ int       rxHistoryCount = 0;
 #define MAX_USERS 5
 struct UserStats {
   String name;
-  int    lastSeq;
-  int    received;
-  int    lost;
+  uint16_t    lastSeq;
+  uint16_t    received;
+  uint16_t    lost;
   // Signal quality per user
   float lastRssi;
   float lastSnr;
@@ -40,6 +37,6 @@ struct UserStats {
   float avgFreqErr;
 };
 UserStats userStats[MAX_USERS];
-int       userCount = 0;
+uint8_t       userCount = 0;
 
 #endif
