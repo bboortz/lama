@@ -1,6 +1,7 @@
 /*
 todos
 * packet
+* command handler
 */
 #include <SPI.h>
 #include <Wire.h>
@@ -10,6 +11,7 @@ todos
 #include "config.h"
 #include "display.h"
 #include "lora.h"
+#include "lora_packet.h"
 #include "packet.h"
 #include "rx_history.h"
 #include "serial.h"
@@ -37,7 +39,7 @@ void setupBoard() {
   delay(500);
 
   // setup done
-  setStatus(READY, "loop()");
+  setStatus(READY);
   delay(500);
 }
 
@@ -52,22 +54,18 @@ void loop() {
 
   switch (systemState) {
     case INIT:
-      // Serial.println("* INIT");
       setupBoard();
       break;
 
     case READY:
-      // Serial.println("* READY");
-      setStatus(IDLE, "loop");
+      setStatus(IDLE);
       break;
 
     case DO_RX:
-      // Serial.println("* DO_RX");
-      decodePacket();
+      receivePacket();
       break;
 
     case DO_TX:
-      // Serial.println("* DO_TX");
       transmitPacket();
       break;
 
@@ -75,7 +73,6 @@ void loop() {
       //    case IN_TX:
 
     case IDLE:
-      // Serial.println("* IDLE");
       if (lastRxTime > 0 && (millis() - lastRxTime > config.rxTimeout)) {
         // No packet received for 30 seconds
         setLoraNetworkState(LOST);

@@ -25,6 +25,9 @@ int radiolibState = 0;
 int rxState       = 0;
 int txState       = 0;
 
-String currentMethod = "setup";
+String currentMethod = "setup()";
+
+
+#define setStatus(state) setStatusInternal(state, __func__)
 
 #endif

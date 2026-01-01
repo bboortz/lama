@@ -11,7 +11,7 @@ void setupDisplay() {
     display->setTextSize(1);
     display->setTextColor(WHITE);
     display->setCursor(0, 0);
-    setStatus(systemState, currentMethod);
+    setStatus(systemState);
   } else {
     displayAvailable = false;  // Mark as unavailable
     Serial.println("WARNING: Display initialization failed!");

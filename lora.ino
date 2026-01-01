@@ -53,33 +53,6 @@ void onPacketRX(void) {
   setSystemState(DO_RX);
 }
 
-void parsePacket(String data, String* user, int* seq, int* msecs, float* rsnr) {
-  char buffer[64];
-  data.toCharArray(buffer, sizeof(buffer));
-  char userBuf[32];
-
-  int result = sscanf(buffer, "%31s %d %d %f", userBuf, seq, msecs, rsnr);
-
-  if (result == 4) {
-    // Format: user seq milliseconds rsnr
-    *user = String(userBuf);
-  } else if (result == 3) {
-    // Format: user seq milliseconds
-    *user = String(userBuf);
-    *rsnr = 0.0;
-  } else if (result == 2) {
-    // Format: user seq
-    *user  = String(userBuf);
-    *msecs = 0;
-    *rsnr  = 0.0;
-  } else {
-    // Parse error
-    *user  = "";
-    *seq   = 0;
-    *msecs = 0;
-    *rsnr  = 0.0;
-  }
-}
 
 void handleRxError(int errorCode) {
   switch (errorCode) {
@@ -95,72 +68,25 @@ void handleRxError(int errorCode) {
   }
 }
 
-void decodePacket(void) {
+void receivePacket(void) {
   if (systemState != DO_RX) {
     return;
   }
-  setStatus(IN_RX, "decodePacket()");
+  
+  setStatus(IN_RX);
+  decodeLoraPacket();
 
-  String data;
-  rxState = radio->readData(data);
-  if (radio->getPacketLength() != 0) {
-    if (rxState == RADIOLIB_ERR_NONE) {
-      float freqErr = radio->getFrequencyError();
-      float rssi    = radio->getRSSI();
-      float snr     = radio->getSNR();
-
-      // parse packet
-      String receivedUsername;
-      int    receivedSeq;
-      int    receivedMSecs;
-      float  receivedSnr;
-      parsePacket(data, &receivedUsername, &receivedSeq, &receivedMSecs, &receivedSnr);
-
-      // loss detection
-      UserStats* stats = findOrCreateUser(receivedUsername);
-      if (stats) {
-        if (stats->lastSeq >= 0 && receivedSeq > stats->lastSeq + 1) {
-          int lost = receivedSeq - stats->lastSeq - 1;
-          stats->lost += lost;
-          rxPacketLost += lost;
-          Serial.printf("*** LOST %d packets!\n", lost);
-        }
-        stats->lastSeq = receivedSeq;
-        stats->received++;
-
-        // Update signal stats for this user
-        updateUserSignalStats(stats, rssi, snr, freqErr);
-
-        // Warn on degrading signal
-        if (stats->received > 10 && rssi < stats->avgRssi - 10) {
-          Serial.printf("WARNING: %s signal degraded by %.0f dB!\n",
-                        stats->name.c_str(),
-                        stats->avgRssi - rssi);
-        }
-      }
-      // add rx to history
-      rxPacketCount++;
-      lastRxTime = millis();
-      setLoraNetworkState(CONNECTED);
-      addToRxHistory(receivedUsername, receivedSeq, receivedMSecs, snr, rssi, freqErr, receivedSnr);
-
-    } else {
-      // Handle ALL errors with one handler
-      handleRxError(rxState);
-    }
-
-    enableRX();
-    updateStatus();
-  }
-
-  setStatus(IDLE, "loop()");
+  enableRX();
+  updateStatus();
+  
+  setStatus(IDLE);
 }
 
 void transmitPacket(void) {
   if (systemState != DO_TX) {
     return;
   }
-  setStatus(IN_TX, "transmitPacket()");
+  setStatus(IN_TX);
   txPacketCount++;
   lastTxTime = millis();
 
@@ -173,5 +99,5 @@ void transmitPacket(void) {
   enableRX();
   updateStatus();
 
-  setStatus(IDLE, "loop()");
+  setStatus(IDLE);
 }
