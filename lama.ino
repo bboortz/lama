@@ -2,6 +2,7 @@
 todos
 * packet
 */
+#include <cstdint>
 #include <SPI.h>
 #include <Wire.h>
 
@@ -16,7 +17,7 @@ todos
 
 void setupBoard() {
   currentMethod = "setup()";
-  systemState = INIT;
+  systemState   = INIT;
   delay(500);
 
   // Load config BEFORE radio setup
@@ -69,15 +70,8 @@ void loop() {
       transmitPacket();
       break;
 
-    case IN_RX:
-      // should never fall into this state
-      // Serial.println("* IN_RX");
-      break;
-
-    case IN_TX:
-      // should never fall into this state
-      // Serial.println("* IN_TX");
-      break;
+      //    case IN_RX:
+      //    case IN_TX:
 
     case IDLE:
       // Serial.println("* IDLE");
@@ -95,6 +89,8 @@ void loop() {
     case FAILED:
       Serial.printf("Failed! Error code: %d\n", systemState);
       displayError("INIT FAILED!");
-      while (1);
+      while (true) {
+        ;
+      }
   }
 }

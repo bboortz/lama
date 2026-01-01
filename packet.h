@@ -14,38 +14,38 @@ enum PacketFlags : uint8_t {
 
 // Packet types
 enum PacketType : uint8_t {
-  PKT_EMPTY     = 0x00,
-  PKT_BEAT      = 0x01,
-  PKT_HEALTH    = 0x02,
-  PKT_CONFIG    = 0x03,
-  PKT_PING      = 0x04,
-  PKT_PONG      = 0x05,
-  PKT_DATA      = 0x06,
-  PKT_ACK       = 0x07,
-  PKT_ALERT     = 0x08,
-  PKT_POSITION  = 0x09,
-  PKT_DISCOVER  = 0x0A,
-  PKT_ANNOUNCE  = 0x0B,
+  PKT_EMPTY    = 0x00,
+  PKT_BEAT     = 0x01,
+  PKT_HEALTH   = 0x02,
+  PKT_CONFIG   = 0x03,
+  PKT_PING     = 0x04,
+  PKT_PONG     = 0x05,
+  PKT_DATA     = 0x06,
+  PKT_ACK      = 0x07,
+  PKT_ALERT    = 0x08,
+  PKT_POSITION = 0x09,
+  PKT_DISCOVER = 0x0A,
+  PKT_ANNOUNCE = 0x0B,
 };
 
 // Alert types
 enum AlertType : uint8_t {
-  ALERT_MOTION  = 0x01,
-  ALERT_TAMPER  = 0x02,
-  ALERT_BATTERY = 0x03,
+  ALERT_MOTION   = 0x01,
+  ALERT_TAMPER   = 0x02,
+  ALERT_BATTERY  = 0x03,
   ALERT_GEOFENCE = 0x04,
 };
 
 // Node capabilities bitmask
 enum NodeCapa : uint8_t {
-  CAPA_RX       = 0x01,
-  CAPA_TX       = 0x02,
-  CAPA_RELAY    = 0x04,
-  CAPA_GATEWAY  = 0x08,
-  CAPA_GPS      = 0x10,
-  CAPA_SENSORS  = 0x20,
-  CAPA_BATTERY  = 0x40,
-  CAPA_MAINS    = 0x80,
+  CAPA_RX      = 0x01,
+  CAPA_TX      = 0x02,
+  CAPA_RELAY   = 0x04,
+  CAPA_GATEWAY = 0x08,
+  CAPA_GPS     = 0x10,
+  CAPA_SENSORS = 0x20,
+  CAPA_BATTERY = 0x40,
+  CAPA_MAINS   = 0x80,
 };
 
 // Broadcast address
@@ -53,29 +53,29 @@ enum NodeCapa : uint8_t {
 
 // Packet header (8 bytes)
 struct PacketHeader {
-  uint8_t version  : 4;
-  uint8_t type     : 4;
-  uint8_t networkId;
-  uint8_t srcNode;
-  uint8_t dstNode;
+  uint8_t  version : 4;
+  uint8_t  type : 4;
+  uint8_t  networkId;
+  uint8_t  srcNode;
+  uint8_t  dstNode;
   uint16_t seq;
-  uint8_t flags;
-  uint8_t dataLen;
+  uint8_t  flags;
+  uint8_t  dataLen;
 };
 
 // Payloads
 struct BeatPayload {
   uint16_t battery;
-  int8_t rssi;
-  uint8_t uptime;
+  int8_t   rssi;
+  uint8_t  uptime;
 };
 
 struct HealthPayload {
   uint16_t battery;
   uint16_t rxCount;
   uint16_t txCount;
-  uint8_t lostCount;
-  int8_t temperature;
+  uint8_t  lostCount;
+  int8_t   temperature;
 };
 
 struct PositionPayload {
@@ -94,17 +94,17 @@ struct DataPayload {
 };
 
 struct AlertPayload {
-  uint8_t alertType;
-  uint8_t severity;
+  uint8_t  alertType;
+  uint8_t  severity;
   uint16_t battery;
-  int32_t latitude;
-  int32_t longitude;
+  int32_t  latitude;
+  int32_t  longitude;
 };
 
 struct AnnouncePayload {
-  char name[12];
-  uint8_t capabilities;
-  uint8_t version;
+  char     name[12];
+  uint8_t  capabilities;
+  uint8_t  version;
   uint16_t battery;
 };
 
@@ -121,28 +121,28 @@ struct PingPayload {
 
 struct LoraPacket {
   PacketHeader header;
-  uint8_t payload[MAX_PAYLOAD];
+  uint8_t      payload[MAX_PAYLOAD];
 };
 
 // Node info for tracking
 #define MAX_NODES 16
 
 struct NodeInfo {
-  uint8_t nodeId;
-  char name[12];
-  uint8_t capabilities;
+  uint8_t  nodeId;
+  char     name[12];
+  uint8_t  capabilities;
   uint32_t lastSeen;
-  float lastRssi;
-  float lastSnr;
+  float    lastRssi;
+  float    lastSnr;
   uint16_t rxCount;
   uint16_t lostCount;
-  int lastSeq;
+  int      lastSeq;
 };
 
 // Function declarations
 LoraPacket createPacket(PacketType type, uint8_t dst, uint8_t flags = FLAG_NONE);
-int transmitPacket(LoraPacket* pkt);
-void handlePacket(LoraPacket* pkt, float rssi, float snr);
+int        transmitPacket(LoraPacket* pkt);
+void       handlePacket(LoraPacket* pkt, float rssi, float snr);
 
 void sendBeat();
 void sendHealth();
@@ -166,6 +166,6 @@ void handleDiscover(LoraPacket* pkt);
 
 NodeInfo* findNode(uint8_t nodeId);
 NodeInfo* addNode(uint8_t nodeId);
-void updateNodeStats(uint8_t nodeId, float rssi, float snr, int seq);
+void      updateNodeStats(uint8_t nodeId, float rssi, float snr, int seq);
 
 #endif

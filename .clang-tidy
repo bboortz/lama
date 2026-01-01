@@ -1,0 +1,20 @@
+---
+Checks: '-*,
+  readability-braces-around-statements,
+  readability-misleading-indentation,
+  readability-redundant-control-flow,
+  readability-simplify-boolean-expr,
+  readability-const-return-type,
+  bugprone-branch-clone,
+  bugprone-infinite-loop,
+  bugprone-suspicious-semicolon,
+  bugprone-undefined-memory-manipulation,
+  performance-faster-string-find,
+  performance-for-range-copy,
+  performance-unnecessary-copy-initialization,
+  modernize-use-nullptr,
+  modernize-use-bool-literals'
+WarningsAsErrors: ''
+CheckOptions:
+  - key: readability-braces-around-statements.ShortStatementLines
+    value: '0'

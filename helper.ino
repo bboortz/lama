@@ -1,6 +1,5 @@
 
 
-
 // Generic right-pad function
 String padRight(String str, int width) {
   while (str.length() < width) {
@@ -16,56 +15,12 @@ String padZeroRight(int num, int digits) {
 }
 
 String getProgressStar() {
-  static int counter = 0;
-  String chars[] = {"/", "-", "\\", "|"};
-  
+  static int   counter = 0;
+  const String chars[] = {"/", "-", "\\", "|"};
+
   String result = chars[counter % 4];
   counter++;
-  
-  return result;
-}
 
-String snrToStars(float snr) {
-  int stars;
-  
-  // Determine number of stars based on SNR
-  if (snr > 15) {
-    stars = 11;
-  } else if (snr > 12) {
-    stars = 10;
-  } else if (snr > 9) {
-    stars = 9;
-  } else if (snr > 6) {
-    stars = 8;
-  } else if (snr > 3) {
-    stars = 7;
-  } else if (snr > 0) {
-    stars = 6;
-  } else if (snr > -3) {
-    stars = 5;
-  } else if (snr > -6) {
-    stars = 4;
-  } else if (snr > -9) {
-    stars = 3;
-  } else if (snr > -12) {
-    stars = 2;
-  } else {
-    stars = 1;
-  }
-  
-  // Build the string with stars and padding
-  String result = "";
-  
-  // Add leading spaces
-  for (int i = 0; i < (11 - stars); i++) {
-    result += " ";
-  }
-  
-  // Add stars (using | character)
-  for (int i = 0; i < stars; i++) {
-    result += "*";
-  }
-  
   return result;
 }
 

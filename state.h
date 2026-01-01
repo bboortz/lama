@@ -2,15 +2,29 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include <cstdint>
+
 // State
-enum system_state_enum {INIT, READY, DO_RX, DO_TX, IN_RX, IN_TX, IDLE, FAILED};
-system_state_enum systemState = INIT;
-int radiolibState = 0;
-int rxState = 0;
-int txState = 0;
-enum network_state_enum {LOST, CONNECTED};
-network_state_enum loraNetworkState = LOST;
-network_state_enum wifiNetworkState = LOST;
-String currentMethod = "setup";
+enum SystemStateEnum : uint8_t { 
+  INIT = 0x00, 
+  READY = 0x01, 
+  DO_RX = 0x02, 
+  DO_TX = 0x03, 
+  IN_RX = 0x04, 
+  IN_TX = 0x05, 
+  IDLE = 0x06, 
+  FAILED = 0x07 
+};
+SystemStateEnum systemState   = INIT;
+int               radiolibState = 0;
+int               rxState       = 0;
+int               txState       = 0;
+enum NetworkStateEnum : uint8_t { 
+  LOST = 0x00, 
+  CONNECTED = 0x01
+};
+NetworkStateEnum loraNetworkState = LOST;
+NetworkStateEnum wifiNetworkState = LOST;
+String             currentMethod    = "setup";
 
 #endif

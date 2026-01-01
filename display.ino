@@ -16,24 +16,24 @@ void setupDisplay() {
     displayAvailable = false;  // Mark as unavailable
     Serial.println("WARNING: Display initialization failed!");
   }
-
 }
 
-
 void updateStatus(void) {
-  if (!displayAvailable) return;  // check if a display is available
+  if (!displayAvailable) {
+    return;  // check if a display is available
+  }
 
-  int totalExpected = rxPacketCount + rxPacketLost;
-  int lossPercent = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
-  unsigned long rxAgo = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
+  int           totalExpected = rxPacketCount + rxPacketLost;
+  int           lossPercent   = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
+  unsigned long rxAgo         = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
 
-  String header = getProgressStar() + " LAMA " + padRight(getProgressStar(), 14);
-  String stateMessage = getState();
+  String header          = getProgressStar() + " LAMA " + padRight(getProgressStar(), 14);
+  String stateMessage    = getState();
   String functionMessage = "F " + currentMethod;
-  String statsMessage = padRight("R:" + String(rxPacketCount), 5) + " " +
-                        padRight("T:" + String(txPacketCount), 5) + " " +
-                        padRight("L:" + String(lossPercent) + "%", 5) + " " +
-                        padRight(String(rxAgo), 3);
+  String statsMessage    = padRight("R:" + String(rxPacketCount), 5) + " "
+                        + padRight("T:" + String(txPacketCount), 5) + " "
+                        + padRight("L:" + String(lossPercent) + "%", 5) + " "
+                        + padRight(String(rxAgo), 3);
 
   display->clearDisplay();
   display->setCursor(0, 0);
@@ -45,12 +45,13 @@ void updateStatus(void) {
   // Per-user signal quality
   display->println("      User SEQ SNR L%");
   for (int i = 0; i < userCount && i < 3; i++) {
-    UserStats* s = &userStats[i];
-    int total = s->received + s->lost;
-    int lossPct = (total > 0) ? (100 * s->lost / total) : 0;
-    
+    UserStats* s       = &userStats[i];
+    int        total   = s->received + s->lost;
+    int        lossPct = (total > 0) ? (100 * s->lost / total) : 0;
+
     char line[22];
-    sprintf(line, "%10s %03d %3.0f %2d",
+    sprintf(line,
+            "%10s %03d %3.0f %2d",
             s->name.substring(0, 6).c_str(),
             s->lastSeq % 1000,
             // s->avgRssi,
@@ -62,10 +63,9 @@ void updateStatus(void) {
   display->display();
 }
 
-
 void displayError(String msg) {
   setSystemState(FAILED);
-  
+
   if (!displayAvailable) {
     Serial.printf("ERROR (no display): %s\n", msg.c_str());
     return;
@@ -75,4 +75,3 @@ void displayError(String msg) {
   display->println(msg);
   display->display();
 }
-

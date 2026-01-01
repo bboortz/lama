@@ -1,7 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-
 #define DEFAULT_NODEID 1
 #define DEFAULT_NETWORKID 1
 #define DEFAULT_CAPABILITIES CAPA_RX | CAPA_TX
@@ -42,19 +41,18 @@
 #define DEFAULT_WIFI_ENABLED true
 #define DEFAULT_WIFI_HOSTNAME "lama"
 
-
 // Config structure
 struct Config {
-  uint8_t nodeId;           
-  uint8_t networkId;        
+  uint8_t nodeId;
+  uint8_t networkId;
   uint8_t capabilities;
-  char user[16];
+  char    user[16];
 
   uint8_t oledPinSda;
   uint8_t oledPinScl;
   uint8_t screenWidth;
   uint8_t screenHeight;
-  
+
   uint8_t loraPinSck;
   uint8_t loraPinMiso;
   uint8_t loraPinMosi;
@@ -64,13 +62,13 @@ struct Config {
 
   float loraFrequency;
   float loraBw;
-  int loraSf;
-  int loraCr;
-  int loraSync;
-  int loraPreamble;
-  int loraTxPower;
-  bool loraCrc;
-  bool loraAfc;
+  int   loraSf;
+  int   loraCr;
+  int   loraSync;
+  int   loraPreamble;
+  int   loraTxPower;
+  bool  loraCrc;
+  bool  loraAfc;
   float loraAfcBandwidth;
 
   int txInterval;
@@ -83,6 +81,5 @@ struct Config {
 };
 
 Config config;
-
 
 #endif

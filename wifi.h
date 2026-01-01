@@ -1,10 +1,10 @@
-  #ifndef WIFI_H
-  #define WIFI_H
+#ifndef WIFI_H
+#define WIFI_H
 
-  #include <WiFi.h>
-  #include <WebServer.h>  // Built-in ESP32 library
+#include <WebServer.h>  // Built-in ESP32 library
+#include <WiFi.h>
 
-  WebServer *server = nullptr;
-  bool wifiAvailable = false;
+WebServer* server        = nullptr;
+bool       wifiAvailable = false;
 
-  #endif
+#endif

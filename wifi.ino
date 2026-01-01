@@ -1,157 +1,160 @@
 void setupWifi() {
-    if (!config.wifiEnabled || strlen(config.wifiSsid) == 0) {
-      Serial.println("WiFi disabled or not configured");
-      return;
-    }
-
-    WiFi.mode(WIFI_STA);
-    WiFi.setHostname(config.wifiHostname);
-    WiFi.begin(config.wifiSsid, config.wifiPassword);
-
-    // Non-blocking connection with timeout
-    unsigned long startAttempt = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 10000) {
-      delay(100);
-    }
-
-    if (WiFi.status() == WL_CONNECTED) {
-      wifiAvailable = true;
-      setWifiNetworkState(CONNECTED);
-      Serial.printf("WiFi connected: %s\n", WiFi.localIP().toString().c_str());
-
-      setupWebServer();
-    } else {
-      wifiAvailable = false;
-      Serial.println("WiFi connection failed");
-    }
+  if (!config.wifiEnabled || strlen(config.wifiSsid) == 0) {
+    Serial.println("WiFi disabled or not configured");
+    return;
   }
 
-  void setupWebServer() {
-    server = new WebServer(80);
-    if (!server) {
-      Serial.println("Failed to create web server");
-      return;
+  WiFi.mode(WIFI_STA);
+  WiFi.setHostname(config.wifiHostname);
+  WiFi.begin(config.wifiSsid, config.wifiPassword);
+
+  // Non-blocking connection with timeout
+  unsigned long startAttempt = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 10000) {
+    delay(100);
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    wifiAvailable = true;
+    setWifiNetworkState(CONNECTED);
+    Serial.printf("WiFi connected: %s\n", WiFi.localIP().toString().c_str());
+
+    setupWebServer();
+  } else {
+    wifiAvailable = false;
+    Serial.println("WiFi connection failed");
+  }
+}
+
+void setupWebServer() {
+  server = new WebServer(80);
+  if (!server) {
+    Serial.println("Failed to create web server");
+    return;
+  }
+
+  // REST API endpoints - BLOCKING but simpler
+  server->on("/api/status", HTTP_GET, []() {
+    int           totalExpected = rxPacketCount + rxPacketLost;
+    int           lossPercent   = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
+    unsigned long rxAgo         = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
+    unsigned long txAgo         = (lastTxTime > 0) ? (millis() - lastTxTime) / 1000 : 999;
+
+    String json = "{";
+    json += "\"nodeId\":" + String(config.nodeId) + ",";
+    json += "\"networkId\":" + String(config.networkId) + ",";
+    json += "\"user\":\"" + String(config.user) + "\",";
+    json += "\"capabilities\":\"0x" + String(config.capabilities, HEX) + "\",";
+    json += "\"state\":\"" + getSystemState() + "\",";
+    json += "\"loraState\":\"" + getLoraNetworkState() + "\",";
+    json += "\"wifiState\":\"" + getWifiNetworkState() + "\",";
+    json += "\"rxCount\":" + String(rxPacketCount) + ",";
+    json += "\"txCount\":" + String(txPacketCount) + ",";
+    json += "\"lostCount\":" + String(rxPacketLost) + ",";
+    json += "\"lossPercent\":" + String(lossPercent) + ",";
+    json += "\"lastRxAgo\":" + String(rxAgo) + ",";
+    json += "\"lastTxAgo\":" + String(txAgo) + ",";
+    json += "\"uptime\":" + String(millis() / 1000) + ",";
+    json += "\"freeHeap\":" + String(ESP.getFreeHeap()) + ",";
+    json += "\"minFreeHeap\":" + String(ESP.getMinFreeHeap()) + ",";
+    json += "\"wifiRssi\":" + String(WiFi.RSSI()) + ",";
+    json += "\"loraFreq\":" + String(config.loraFrequency, 1) + ",";
+    json += "\"loraBw\":" + String(config.loraBw, 1) + ",";
+    json += "\"loraSf\":" + String(config.loraSf) + ",";
+    json += "\"loraPower\":" + String(config.loraTxPower);
+    json += "}";
+    server->send(200, "application/json", json);
+  });
+
+  server->on("/api/tx", HTTP_POST, []() {
+    if (systemState == IDLE) {
+      setSystemState(DO_TX);
+      server->send(200, "application/json", "{\"status\":\"transmitting\"}");
+    } else {
+      server->send(409, "application/json", "{\"error\":\"busy\"}");
     }
+  });
 
-    // REST API endpoints - BLOCKING but simpler
-    server->on("/api/status", HTTP_GET, []() {
-      int totalExpected = rxPacketCount + rxPacketLost;
-      int lossPercent = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
-      unsigned long rxAgo = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
-      unsigned long txAgo = (lastTxTime > 0) ? (millis() - lastTxTime) / 1000 : 999;
+  // User statistics
+  server->on("/api/users", HTTP_GET, []() {
+    String json = "[";
+    for (int i = 0; i < userCount; i++) {
+      if (i > 0)
+        json += ",";
+      UserStats* s       = &userStats[i];
+      int        total   = s->received + s->lost;
+      int        lossPct = (total > 0) ? (100 * s->lost / total) : 0;
 
-      String json = "{";
-      json += "\"nodeId\":" + String(config.nodeId) + ",";
-      json += "\"networkId\":" + String(config.networkId) + ",";
-      json += "\"user\":\"" + String(config.user) + "\",";
-      json += "\"capabilities\":\"0x" + String(config.capabilities, HEX) + "\",";
-      json += "\"state\":\"" + getSystemState() + "\",";
-      json += "\"loraState\":\"" + getLoraNetworkState() + "\",";
-      json += "\"wifiState\":\"" + getWifiNetworkState() + "\",";
-      json += "\"rxCount\":" + String(rxPacketCount) + ",";
-      json += "\"txCount\":" + String(txPacketCount) + ",";
-      json += "\"lostCount\":" + String(rxPacketLost) + ",";
-      json += "\"lossPercent\":" + String(lossPercent) + ",";
-      json += "\"lastRxAgo\":" + String(rxAgo) + ",";
-      json += "\"lastTxAgo\":" + String(txAgo) + ",";
-      json += "\"uptime\":" + String(millis() / 1000) + ",";
-      json += "\"freeHeap\":" + String(ESP.getFreeHeap()) + ",";
-      json += "\"minFreeHeap\":" + String(ESP.getMinFreeHeap()) + ",";
-      json += "\"wifiRssi\":" + String(WiFi.RSSI()) + ",";
-      json += "\"loraFreq\":" + String(config.loraFrequency, 1) + ",";
-      json += "\"loraBw\":" + String(config.loraBw, 1) + ",";
-      json += "\"loraSf\":" + String(config.loraSf) + ",";
-      json += "\"loraPower\":" + String(config.loraTxPower);
+      json += "{";
+      json += "\"name\":\"" + s->name + "\",";
+      json += "\"received\":" + String(s->received) + ",";
+      json += "\"lost\":" + String(s->lost) + ",";
+      json += "\"lossPercent\":" + String(lossPct) + ",";
+      json += "\"lastSeq\":" + String(s->lastSeq) + ",";
+      json += "\"lastRssi\":" + String(s->lastRssi, 1) + ",";
+      json += "\"lastSnr\":" + String(s->lastSnr, 1) + ",";
+      json += "\"avgRssi\":" + String(s->avgRssi, 1) + ",";
+      json += "\"avgSnr\":" + String(s->avgSnr, 1) + ",";
+      json += "\"minRssi\":" + String(s->minRssi, 1) + ",";
+      json += "\"maxRssi\":" + String(s->maxRssi, 1);
       json += "}";
-      server->send(200, "application/json", json);
-    });
+    }
+    json += "]";
+    server->send(200, "application/json", json);
+  });
 
-    server->on("/api/tx", HTTP_POST, []() {
-      if (systemState == IDLE) {
-        setSystemState(DO_TX);
-        server->send(200, "application/json", "{\"status\":\"transmitting\"}");
-      } else {
-        server->send(409, "application/json", "{\"error\":\"busy\"}");
-      }
-    });
+  // Known nodes
+  server->on("/api/nodes", HTTP_GET, []() {
+    String json = "[";
+    for (int i = 0; i < nodeCount; i++) {
+      if (i > 0)
+        json += ",";
+      NodeInfo*     n           = &knownNodes[i];
+      int           total       = n->rxCount + n->lostCount;
+      int           lossPct     = (total > 0) ? (100 * n->lostCount / total) : 0;
+      unsigned long lastSeenAgo = (millis() - n->lastSeen) / 1000;
 
-    // User statistics
-    server->on("/api/users", HTTP_GET, []() {
-      String json = "[";
-      for (int i = 0; i < userCount; i++) {
-        if (i > 0) json += ",";
-        UserStats* s = &userStats[i];
-        int total = s->received + s->lost;
-        int lossPct = (total > 0) ? (100 * s->lost / total) : 0;
+      json += "{";
+      json += "\"nodeId\":" + String(n->nodeId) + ",";
+      json += "\"name\":\"" + String(n->name) + "\",";
+      json += "\"capabilities\":\"0x" + String(n->capabilities, HEX) + "\",";
+      json += "\"rxCount\":" + String(n->rxCount) + ",";
+      json += "\"lostCount\":" + String(n->lostCount) + ",";
+      json += "\"lossPercent\":" + String(lossPct) + ",";
+      json += "\"lastSeq\":" + String(n->lastSeq) + ",";
+      json += "\"lastRssi\":" + String(n->lastRssi, 1) + ",";
+      json += "\"lastSnr\":" + String(n->lastSnr, 1) + ",";
+      json += "\"lastSeenAgo\":" + String(lastSeenAgo);
+      json += "}";
+    }
+    json += "]";
+    server->send(200, "application/json", json);
+  });
 
-        json += "{";
-        json += "\"name\":\"" + s->name + "\",";
-        json += "\"received\":" + String(s->received) + ",";
-        json += "\"lost\":" + String(s->lost) + ",";
-        json += "\"lossPercent\":" + String(lossPct) + ",";
-        json += "\"lastSeq\":" + String(s->lastSeq) + ",";
-        json += "\"lastRssi\":" + String(s->lastRssi, 1) + ",";
-        json += "\"lastSnr\":" + String(s->lastSnr, 1) + ",";
-        json += "\"avgRssi\":" + String(s->avgRssi, 1) + ",";
-        json += "\"avgSnr\":" + String(s->avgSnr, 1) + ",";
-        json += "\"minRssi\":" + String(s->minRssi, 1) + ",";
-        json += "\"maxRssi\":" + String(s->maxRssi, 1);
-        json += "}";
-      }
-      json += "]";
-      server->send(200, "application/json", json);
-    });
+  // RX History
+  server->on("/api/history", HTTP_GET, []() {
+    String json = "[";
+    for (int i = 0; i < rxHistoryCount; i++) {
+      if (i > 0)
+        json += ",";
+      RxMessage* m = &rxHistory[i];
 
-    // Known nodes
-    server->on("/api/nodes", HTTP_GET, []() {
-      String json = "[";
-      for (int i = 0; i < nodeCount; i++) {
-        if (i > 0) json += ",";
-        NodeInfo* n = &knownNodes[i];
-        int total = n->rxCount + n->lostCount;
-        int lossPct = (total > 0) ? (100 * n->lostCount / total) : 0;
-        unsigned long lastSeenAgo = (millis() - n->lastSeen) / 1000;
+      json += "{";
+      json += "\"user\":\"" + m->user + "\",";
+      json += "\"seq\":" + String(m->seq) + ",";
+      json += "\"msecs\":" + String(m->msecs) + ",";
+      json += "\"snr\":" + String(m->snr, 1) + ",";
+      json += "\"rssi\":" + String(m->rssi, 1) + ",";
+      json += "\"freqErr\":" + String(m->freqErr, 1) + ",";
+      json += "\"rsnr\":" + String(m->rsnr, 1);
+      json += "}";
+    }
+    json += "]";
+    server->send(200, "application/json", json);
+  });
 
-        json += "{";
-        json += "\"nodeId\":" + String(n->nodeId) + ",";
-        json += "\"name\":\"" + String(n->name) + "\",";
-        json += "\"capabilities\":\"0x" + String(n->capabilities, HEX) + "\",";
-        json += "\"rxCount\":" + String(n->rxCount) + ",";
-        json += "\"lostCount\":" + String(n->lostCount) + ",";
-        json += "\"lossPercent\":" + String(lossPct) + ",";
-        json += "\"lastSeq\":" + String(n->lastSeq) + ",";
-        json += "\"lastRssi\":" + String(n->lastRssi, 1) + ",";
-        json += "\"lastSnr\":" + String(n->lastSnr, 1) + ",";
-        json += "\"lastSeenAgo\":" + String(lastSeenAgo);
-        json += "}";
-      }
-      json += "]";
-      server->send(200, "application/json", json);
-    });
-
-    // RX History
-    server->on("/api/history", HTTP_GET, []() {
-      String json = "[";
-      for (int i = 0; i < rxHistoryCount; i++) {
-        if (i > 0) json += ",";
-        RxMessage* m = &rxHistory[i];
-
-        json += "{";
-        json += "\"user\":\"" + m->user + "\",";
-        json += "\"seq\":" + String(m->seq) + ",";
-        json += "\"msecs\":" + String(m->msecs) + ",";
-        json += "\"snr\":" + String(m->snr, 1) + ",";
-        json += "\"rssi\":" + String(m->rssi, 1) + ",";
-        json += "\"freqErr\":" + String(m->freqErr, 1) + ",";
-        json += "\"rsnr\":" + String(m->rsnr, 1);
-        json += "}";
-      }
-      json += "]";
-      server->send(200, "application/json", json);
-    });
-
-    server->on("/", HTTP_GET, []() {
-      server->send_P(200, "text/html", R"=====(
+  server->on("/", HTTP_GET, []() {
+    server->send_P(200, "text/html", R"=====(
 <!DOCTYPE html>
 <html><head><title>LAMA Monitor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -231,14 +234,14 @@ loadData();setInterval(loadData,3000);
 </script>
 </body></html>
 )=====");
-    });
+  });
 
-    server->begin();
-    Serial.println("Web server started on port 80");
-  }
+  server->begin();
+  Serial.println("Web server started on port 80");
+}
 
-  void handleWifi() {
-    if (wifiAvailable && server) {
-      server->handleClient();  // Call this in main loop
-    }
+void handleWifi() {
+  if (wifiAvailable && server) {
+    server->handleClient();  // Call this in main loop
   }
+}

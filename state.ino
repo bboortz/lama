@@ -4,82 +4,75 @@ String getState() {
     loraState = "OK";
   }
 
-  return padRight(getSystemState(), 5) + " " + 
-         padRight(loraState, 5) + " " + 
-         padRight("L:" + getLoraNetworkState(), 3) + " " +
-         padRight("W:" + getWifiNetworkState(), 3);
+  return padRight(getSystemState(), 5) + " " + padRight(loraState, 5) + " "
+         + padRight("L:" + getLoraNetworkState(), 3) + " "
+         + padRight("W:" + getWifiNetworkState(), 3);
 }
 
-void setSystemState(system_state_enum stateobj) {
+void setSystemState(SystemStateEnum stateobj) {
   systemState = stateobj;
 }
 
 String getSystemState() {
-
-  switch ( systemState ) {
-    case INIT: 
+  switch (systemState) {
+    case INIT:
       return "INIT";
-    
+
     case READY:
       return "READY";
-      
+
     case DO_RX:
       return "DO_RX";
-      
+
     case DO_TX:
       return "DO_TX";
-    
+
     case IN_RX:
       return "IN_RX";
-      
+
     case IN_TX:
       return "IN_TX";
-      
+
     case IDLE:
       return "IDLE";
-      
+
     case FAILED:
       return "FAILED";
   }
 
   return "FAILED";
-  
 }
 
-void setLoraNetworkState(network_state_enum stateobj) {
+void setLoraNetworkState(NetworkStateEnum stateobj) {
   loraNetworkState = stateobj;
 }
 
 String getLoraNetworkState() {
-
-  switch ( loraNetworkState ) {
-    case LOST: 
+  switch (loraNetworkState) {
+    case LOST:
       return "L";
-    
+
     case CONNECTED:
       return "C";
   }
 
   return "FAILED";
-  
 }
 
-void setWifiNetworkState(network_state_enum stateobj) {
+void setWifiNetworkState(NetworkStateEnum stateobj) {
   wifiNetworkState = stateobj;
 }
 
 String getWifiNetworkState() {
-
-  switch ( wifiNetworkState ) {
-    case LOST: 
+  switch (wifiNetworkState) {
+    case LOST:
       return "L";
-    
+
     case CONNECTED:
       return "C";
   }
 
   return "FAILED";
-  
 }
 
 int doRadiolibState(int state) {
@@ -91,8 +84,8 @@ int doRadiolibState(int state) {
   return 0;
 }
 
-void setStatus(system_state_enum newState, String newFunc) {
- setSystemState(newState);
- currentMethod = newFunc;
- updateStatus();
+void setStatus(SystemStateEnum newState, String newFunc) {
+  setSystemState(newState);
+  currentMethod = newFunc;
+  updateStatus();
 }

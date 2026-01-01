@@ -1,63 +1,59 @@
 #include <Preferences.h>
 
-
-
-
 Preferences preferences;
-
 
 void loadConfig() {
   preferences.begin("lora", true);  // true = read-only
-  
+
   // Node settings
-  config.nodeId = preferences.getUChar("nodeId", DEFAULT_NODEID);
-  config.networkId = preferences.getUChar("networkId", DEFAULT_NETWORKID);
+  config.nodeId       = preferences.getUChar("nodeId", DEFAULT_NODEID);
+  config.networkId    = preferences.getUChar("networkId", DEFAULT_NETWORKID);
   config.capabilities = preferences.getUChar("capabilities", DEFAULT_CAPABILITIES);
-  String savedUser = preferences.getString("user", DEFAULT_USER);
+  String savedUser    = preferences.getString("user", DEFAULT_USER);
   savedUser.toCharArray(config.user, sizeof(config.user));
 
   // OLED settings
-  config.oledPinSda = preferences.getInt("oledPinSda", DEFAULT_OLED_PIN_SDA);
-  config.oledPinScl = preferences.getInt("oledPinScl", DEFAULT_OLED_PIN_SCL);
-  config.screenWidth = preferences.getInt("screenWidth", DEFAULT_SCREEN_WIDTH);
+  config.oledPinSda   = preferences.getInt("oledPinSda", DEFAULT_OLED_PIN_SDA);
+  config.oledPinScl   = preferences.getInt("oledPinScl", DEFAULT_OLED_PIN_SCL);
+  config.screenWidth  = preferences.getInt("screenWidth", DEFAULT_SCREEN_WIDTH);
   config.screenHeight = preferences.getInt("screenHeight", DEFAULT_SCREEN_HEIGHT);
-  
+
   // LoRa pin configuration
-  config.loraPinSck = preferences.getInt("loraPinSck", DEFAULT_LORA_PIN_SCK);
+  config.loraPinSck  = preferences.getInt("loraPinSck", DEFAULT_LORA_PIN_SCK);
   config.loraPinMiso = preferences.getInt("loraPinMiso", DEFAULT_LORA_PIN_MISO);
   config.loraPinMosi = preferences.getInt("loraPinMosi", DEFAULT_LORA_PIN_MOSI);
-  config.loraPinCs = preferences.getInt("loraPinCs", DEFAULT_LORA_PIN_CS);
-  config.loraPinRst = preferences.getInt("loraPinRst", DEFAULT_LORA_PIN_RST);  // FIXED!
-  config.loraPinIrq = preferences.getInt("loraPinIrq", DEFAULT_LORA_PIN_IRQ);
+  config.loraPinCs   = preferences.getInt("loraPinCs", DEFAULT_LORA_PIN_CS);
+  config.loraPinRst  = preferences.getInt("loraPinRst", DEFAULT_LORA_PIN_RST);  // FIXED!
+  config.loraPinIrq  = preferences.getInt("loraPinIrq", DEFAULT_LORA_PIN_IRQ);
 
   // LoRa RF parameters
-  config.loraFrequency = preferences.getFloat("loraFrequency", DEFAULT_LORA_FREQ);
-  config.loraBw = preferences.getFloat("loraBw", DEFAULT_LORA_BW);
-  config.loraSf = preferences.getInt("loraSf", DEFAULT_LORA_SF);
-  config.loraCr = preferences.getInt("loraCr", DEFAULT_LORA_CR);
-  config.loraSync = preferences.getInt("loraSync", DEFAULT_LORA_SYNC);
-  config.loraPreamble = preferences.getInt("loraPreamble", DEFAULT_LORA_PREAMBLE);
-  config.loraTxPower = preferences.getInt("loraTxPower", DEFAULT_LORA_TXPOWER);
-  config.loraCrc = preferences.getInt("loraCrc", DEFAULT_LORA_CRC);
-  config.loraAfc = preferences.getInt("loraAfc", DEFAULT_LORA_AFC);
+  config.loraFrequency    = preferences.getFloat("loraFrequency", DEFAULT_LORA_FREQ);
+  config.loraBw           = preferences.getFloat("loraBw", DEFAULT_LORA_BW);
+  config.loraSf           = preferences.getInt("loraSf", DEFAULT_LORA_SF);
+  config.loraCr           = preferences.getInt("loraCr", DEFAULT_LORA_CR);
+  config.loraSync         = preferences.getInt("loraSync", DEFAULT_LORA_SYNC);
+  config.loraPreamble     = preferences.getInt("loraPreamble", DEFAULT_LORA_PREAMBLE);
+  config.loraTxPower      = preferences.getInt("loraTxPower", DEFAULT_LORA_TXPOWER);
+  config.loraCrc          = preferences.getInt("loraCrc", DEFAULT_LORA_CRC);
+  config.loraAfc          = preferences.getInt("loraAfc", DEFAULT_LORA_AFC);
   config.loraAfcBandwidth = preferences.getFloat("loraAfcBandwidth", DEFAULT_LORA_AFC_BANDWIDTH);
 
   // Timing
   config.txInterval = preferences.getInt("txInterval", DEFAULT_TX_INTERVAL);
-  config.rxTimeout = preferences.getInt("rxTimeout", DEFAULT_RX_TIMEOUT);
-  
+  config.rxTimeout  = preferences.getInt("rxTimeout", DEFAULT_RX_TIMEOUT);
+
   // WiFi settings
   String savedSsid = preferences.getString("wifiSsid", "");
   savedSsid.toCharArray(config.wifiSsid, sizeof(config.wifiSsid));
   String savedPassword = preferences.getString("wifiPassword", "");
   savedPassword.toCharArray(config.wifiPassword, sizeof(config.wifiPassword));
-  config.wifiEnabled = preferences.getBool("wifiEnabled", true);
+  config.wifiEnabled   = preferences.getBool("wifiEnabled", true);
   String savedHostname = preferences.getString("wifiHostname", "lama");
   savedHostname.toCharArray(config.wifiHostname, sizeof(config.wifiHostname));
-  
+
   preferences.end();
-  
-  Serial.println("Config loaded");  
+
+  Serial.println("Config loaded");
 }
 
 void saveConfig() {
@@ -66,7 +62,7 @@ void saveConfig() {
   // Node settings
   preferences.putUChar("nodeId", config.nodeId);
   preferences.putUChar("networkId", config.networkId);
-  preferences.putUChar("capabilities", config.capabilities); 
+  preferences.putUChar("capabilities", config.capabilities);
   preferences.putString("user", String(config.user));
 
   // OLED settings
@@ -98,15 +94,15 @@ void saveConfig() {
   // Timing
   preferences.putInt("txInterval", config.txInterval);
   preferences.putInt("rxTimeout", config.rxTimeout);
-  
+
   // WiFi settings
   preferences.putString("wifiSsid", String(config.wifiSsid));
   preferences.putString("wifiPassword", String(config.wifiPassword));
   preferences.putBool("wifiEnabled", config.wifiEnabled);
   preferences.putString("wifiHostname", String(config.wifiHostname));
-  
+
   preferences.end();
-  
+
   Serial.println("Config saved!");
 }
 
@@ -114,7 +110,7 @@ void resetConfig() {
   preferences.begin("lora", false);
   preferences.clear();
   preferences.end();
-  
+
   Serial.println("Config reset to defaults!");
   loadConfig();  // Reload defaults
 }
@@ -126,12 +122,12 @@ void printConfig() {
   Serial.printf("  Network ID:     %d\n", config.networkId);
   Serial.printf("  Capabilities:   0x%02X\n", config.capabilities);
   Serial.printf("  User:           %s\n", config.user);
-  
+
   Serial.println("\nOLED Display:");
   Serial.printf("  SDA Pin:        %d\n", config.oledPinSda);
   Serial.printf("  SCL Pin:        %d\n", config.oledPinScl);
   Serial.printf("  Resolution:     %dx%d\n", config.screenWidth, config.screenHeight);
-  
+
   Serial.println("\nLoRa Pin Configuration:");
   Serial.printf("  SCK:            %d\n", config.loraPinSck);
   Serial.printf("  MISO:           %d\n", config.loraPinMiso);
@@ -139,7 +135,7 @@ void printConfig() {
   Serial.printf("  CS:             %d\n", config.loraPinCs);
   Serial.printf("  RST:            %d\n", config.loraPinRst);
   Serial.printf("  IRQ:            %d\n", config.loraPinIrq);
-  
+
   Serial.println("\nLoRa RF Parameters:");
   Serial.printf("  Frequency:      %.1f MHz\n", config.loraFrequency);
   Serial.printf("  Bandwidth:      %.1f kHz\n", config.loraBw);
@@ -151,15 +147,17 @@ void printConfig() {
   Serial.printf("  CRC:            %s\n", config.loraCrc ? "ON" : "OFF");
   Serial.printf("  AFC:            %s\n", config.loraAfc ? "ON" : "OFF");
   Serial.printf("  AFC Bandwidth:  %.1f kHz\n", config.loraAfcBandwidth);
-  
+
   Serial.println("\nTiming:");
   Serial.printf("  TX Interval:    %d ms\n", config.txInterval);
   Serial.printf("  RX Timeout:     %d ms\n", config.rxTimeout);
-  
+
   Serial.println("\nWiFi:");
   Serial.printf("  Enabled:        %s\n", config.wifiEnabled ? "YES" : "NO");
-  Serial.printf("  SSID:           %s\n", strlen(config.wifiSsid) > 0 ? config.wifiSsid : "(not set)");
-  Serial.printf("  Password:       %s\n", strlen(config.wifiPassword) > 0 ? "********" : "(not set)");
+  Serial.printf("  SSID:           %s\n",
+                strlen(config.wifiSsid) > 0 ? config.wifiSsid : "(not set)");
+  Serial.printf("  Password:       %s\n",
+                strlen(config.wifiPassword) > 0 ? "********" : "(not set)");
   Serial.printf("  Hostname:       %s\n", config.wifiHostname);
   if (WiFi.status() == WL_CONNECTED) {
     Serial.printf("  Status:         Connected\n");
@@ -168,30 +166,34 @@ void printConfig() {
   } else {
     Serial.printf("  Status:         Disconnected\n");
   }
-  
+
   Serial.println("\nMemory:");
   Serial.printf("  Free Heap:      %d bytes\n", ESP.getFreeHeap());
   Serial.printf("  Largest Block:  %d bytes\n", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
   Serial.printf("  Min Free Heap:  %d bytes\n", ESP.getMinFreeHeap());
-  
+
   Serial.println("======================");
 }
 
 void handleSerialCommand() {
-  if (!Serial.available()) return;
-  
+  if (!Serial.available()) {
+    return;
+  }
+
   String cmd = Serial.readStringUntil('\n');
   cmd.trim();
-  
-  if (cmd.length() == 0) return;
-  
+
+  if (cmd.length() == 0) {
+    return;
+  }
+
   // Parse command and value
-  int spaceIdx = cmd.indexOf(' ');
-  String command = (spaceIdx > 0) ? cmd.substring(0, spaceIdx) : cmd;
-  String value = (spaceIdx > 0) ? cmd.substring(spaceIdx + 1) : "";
-  
+  int    spaceIdx = cmd.indexOf(' ');
+  String command  = (spaceIdx > 0) ? cmd.substring(0, spaceIdx) : cmd;
+  String value    = (spaceIdx > 0) ? cmd.substring(spaceIdx + 1) : "";
+
   command.toLowerCase();
-  
+
   // ========== Node Configuration ==========
   if (command == "nodeid" && value.length() > 0) {
     uint8_t id = value.toInt();
@@ -202,7 +204,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Node ID must be 0-255");
     }
-    
+
   } else if (command == "netid" && value.length() > 0) {
     uint8_t id = value.toInt();
     if (id >= 0 && id <= 255) {
@@ -212,12 +214,12 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Network ID must be 0-255");
     }
-    
+
   } else if (command == "cap" && value.length() > 0) {
     config.capabilities = (uint8_t)strtol(value.c_str(), NULL, 16);
     saveConfig();
     Serial.printf("Capabilities set to: 0x%02X (reboot required)\n", config.capabilities);
-    
+
   } else if (command == "user" && value.length() > 0) {
     if (value.length() < sizeof(config.user)) {
       value.toCharArray(config.user, sizeof(config.user));
@@ -226,8 +228,8 @@ void handleSerialCommand() {
     } else {
       Serial.printf("Error: Username too long (max %d chars)\n", sizeof(config.user) - 1);
     }
-    
-  // ========== OLED Pin Configuration ==========
+
+    // ========== OLED Pin Configuration ==========
   } else if (command == "oled_sda" && value.length() > 0) {
     int pin = value.toInt();
     if (pin >= 0 && pin <= 39) {
@@ -237,7 +239,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Invalid pin number (0-39)");
     }
-    
+
   } else if (command == "oled_scl" && value.length() > 0) {
     int pin = value.toInt();
     if (pin >= 0 && pin <= 39) {
@@ -247,8 +249,8 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Invalid pin number (0-39)");
     }
-    
-  // ========== LoRa Pin Configuration ==========
+
+    // ========== LoRa Pin Configuration ==========
   } else if (command == "lora_sck" && value.length() > 0) {
     int pin = value.toInt();
     if (pin >= 0 && pin <= 39) {
@@ -258,7 +260,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Invalid pin number (0-39)");
     }
-    
+
   } else if (command == "lora_miso" && value.length() > 0) {
     int pin = value.toInt();
     if (pin >= 0 && pin <= 39) {
@@ -268,7 +270,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Invalid pin number (0-39)");
     }
-    
+
   } else if (command == "lora_mosi" && value.length() > 0) {
     int pin = value.toInt();
     if (pin >= 0 && pin <= 39) {
@@ -278,7 +280,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Invalid pin number (0-39)");
     }
-    
+
   } else if (command == "lora_cs" && value.length() > 0) {
     int pin = value.toInt();
     if (pin >= 0 && pin <= 39) {
@@ -288,7 +290,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Invalid pin number (0-39)");
     }
-    
+
   } else if (command == "lora_rst" && value.length() > 0) {
     int pin = value.toInt();
     if (pin >= 0 && pin <= 39) {
@@ -298,7 +300,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Invalid pin number (0-39)");
     }
-    
+
   } else if (command == "lora_irq" && value.length() > 0) {
     int pin = value.toInt();
     if (pin >= 0 && pin <= 39) {
@@ -308,8 +310,8 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Invalid pin number (0-39)");
     }
-    
-  // ========== LoRa RF Parameters ==========
+
+    // ========== LoRa RF Parameters ==========
   } else if (command == "freq" && value.length() > 0) {
     float freq = value.toFloat();
     if (freq >= 137.0 && freq <= 1020.0) {
@@ -319,19 +321,18 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Frequency must be 137-1020 MHz");
     }
-    
+
   } else if (command == "bw" && value.length() > 0) {
     float bw = value.toFloat();
-    if (bw == 7.800 || bw == 10.400 || bw == 15.600 || bw == 20.800 || 
-        bw == 31.250 || bw == 41.700 || bw == 62.500 || bw == 125.000 || 
-        bw == 250.000 || bw == 500.000) {
+    if (bw == 7.800 || bw == 10.400 || bw == 15.600 || bw == 20.800 || bw == 31.250 || bw == 41.700
+        || bw == 62.500 || bw == 125.000 || bw == 250.000 || bw == 500.000) {
       config.loraBw = bw;
       saveConfig();
       Serial.printf("Bandwidth set to: %f kHz (reboot required)\n", config.loraBw);
     } else {
       Serial.println("Error: Invalid bandwidth (use 125, 250, 500 for kHz)");
     }
-    
+
   } else if (command == "sf" && value.length() > 0) {
     int sf = value.toInt();
     if (sf >= 7 && sf <= 12) {
@@ -341,7 +342,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: SF must be 7-12");
     }
-    
+
   } else if (command == "cr" && value.length() > 0) {
     int cr = value.toInt();
     if (cr >= 5 && cr <= 8) {
@@ -351,12 +352,12 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: CR must be 5-8");
     }
-    
+
   } else if (command == "sync" && value.length() > 0) {
     config.loraSync = (int)strtol(value.c_str(), NULL, 16);
     saveConfig();
     Serial.printf("Sync word set to: 0x%02X (reboot required)\n", config.loraSync);
-    
+
   } else if (command == "preamble" && value.length() > 0) {
     int preamble = value.toInt();
     if (preamble >= 6 && preamble <= 65535) {
@@ -366,7 +367,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Preamble must be 6-65535");
     }
-    
+
   } else if (command == "power" && value.length() > 0) {
     int pwr = value.toInt();
     if (pwr >= 2 && pwr <= 20) {
@@ -376,7 +377,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Power must be 2-20 dBm");
     }
-    
+
   } else if (command == "crc") {
     if (value == "on" || value == "1") {
       config.loraCrc = 1;
@@ -387,7 +388,7 @@ void handleSerialCommand() {
     }
     saveConfig();
     Serial.printf("CRC set to: %s (reboot required)\n", config.loraCrc ? "ON" : "OFF");
-    
+
   } else if (command == "afc") {
     if (value == "on" || value == "1") {
       config.loraAfc = 1;
@@ -398,13 +399,13 @@ void handleSerialCommand() {
     }
     saveConfig();
     Serial.printf("AFC set to: %s (reboot required)\n", config.loraAfc ? "ON" : "OFF");
-    
+
   } else if (command == "afcbw" && value.length() > 0) {
     config.loraAfcBandwidth = value.toFloat();
     saveConfig();
     Serial.printf("AFC Bandwidth set to: %f kHz (reboot required)\n", config.loraAfcBandwidth);
-    
-  // ========== Timing ==========
+
+    // ========== Timing ==========
   } else if (command == "txint" && value.length() > 0) {
     int interval = value.toInt();
     if (interval >= 100 && interval <= 3600000) {
@@ -414,7 +415,7 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: TX interval must be 100-3600000 ms");
     }
-    
+
   } else if (command == "rxtimeout" && value.length() > 0) {
     int timeout = value.toInt();
     if (timeout >= 100 && timeout <= 60000) {
@@ -424,8 +425,8 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: RX timeout must be 100-60000 ms");
     }
-    
-  // ========== WiFi Configuration ==========
+
+    // ========== WiFi Configuration ==========
   } else if (command == "ssid" && value.length() > 0) {
     if (value.length() < sizeof(config.wifiSsid)) {
       value.toCharArray(config.wifiSsid, sizeof(config.wifiSsid));
@@ -434,7 +435,7 @@ void handleSerialCommand() {
     } else {
       Serial.printf("Error: SSID too long (max %d chars)\n", sizeof(config.wifiSsid) - 1);
     }
-    
+
   } else if (command == "password" && value.length() > 0) {
     if (value.length() < sizeof(config.wifiPassword)) {
       value.toCharArray(config.wifiPassword, sizeof(config.wifiPassword));
@@ -443,7 +444,7 @@ void handleSerialCommand() {
     } else {
       Serial.printf("Error: Password too long (max %d chars)\n", sizeof(config.wifiPassword) - 1);
     }
-    
+
   } else if (command == "hostname" && value.length() > 0) {
     if (value.length() < sizeof(config.wifiHostname)) {
       value.toCharArray(config.wifiHostname, sizeof(config.wifiHostname));
@@ -452,7 +453,7 @@ void handleSerialCommand() {
     } else {
       Serial.printf("Error: Hostname too long (max %d chars)\n", sizeof(config.wifiHostname) - 1);
     }
-    
+
   } else if (command == "wifi") {
     if (value == "on" || value == "enable" || value == "1") {
       config.wifiEnabled = true;
@@ -484,8 +485,8 @@ void handleSerialCommand() {
       saveConfig();
       Serial.printf("WiFi %s (reboot required)\n", config.wifiEnabled ? "enabled" : "disabled");
     }
-    
-  // ========== Network Commands ==========
+
+    // ========== Network Commands ==========
   } else if (command == "ping" && value.length() > 0) {
     uint8_t dst = value.toInt();
     if (dst >= 0 && dst <= 255) {
@@ -494,30 +495,31 @@ void handleSerialCommand() {
     } else {
       Serial.println("Error: Node ID must be 0-255");
     }
-    
+
   } else if (command == "discover") {
     sendDiscover();
     Serial.println("Discovery broadcast sent");
-    
+
   } else if (command == "announce") {
     sendAnnounce();
     Serial.println("Announce broadcast sent");
-    
+
   } else if (command == "nodes") {
     printNodes();
-    
-  // ========== Statistics and Info ==========
+
+    // ========== Statistics and Info ==========
   } else if (command == "users" || command == "stats") {
     printUserStats();
-    
+
   } else if (command == "show" || command == "config") {
     printConfig();
-    
+
   } else if (command == "mem" || command == "memory") {
     Serial.println("=== Memory Info ===");
     Serial.printf("Free Heap:        %d bytes\n", ESP.getFreeHeap());
     Serial.printf("Min Free Heap:    %d bytes\n", ESP.getMinFreeHeap());
-    Serial.printf("Largest Block:    %d bytes\n", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
+    Serial.printf("Largest Block:    %d bytes\n",
+                  heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
     Serial.printf("Total Heap:       %d bytes\n", ESP.getHeapSize());
     Serial.printf("Flash Size:       %d bytes\n", ESP.getFlashChipSize());
     Serial.printf("Flash Speed:      %d MHz\n", ESP.getFlashChipSpeed() / 1000000);
@@ -526,29 +528,32 @@ void handleSerialCommand() {
     Serial.printf("CPU Frequency:    %d MHz\n", ESP.getCpuFreqMHz());
     Serial.printf("SDK Version:      %s\n", ESP.getSdkVersion());
     Serial.println("===================");
-    
+
   } else if (command == "uptime") {
-    unsigned long uptime = millis();
+    unsigned long uptime  = millis();
     unsigned long seconds = uptime / 1000;
     unsigned long minutes = seconds / 60;
-    unsigned long hours = minutes / 60;
-    unsigned long days = hours / 24;
-    
-    Serial.printf("Uptime: %lu days, %lu:%02lu:%02lu\n", 
-                  days, hours % 24, minutes % 60, seconds % 60);
-    
-  // ========== System Commands ==========
+    unsigned long hours   = minutes / 60;
+    unsigned long days    = hours / 24;
+
+    Serial.printf("Uptime: %lu days, %lu:%02lu:%02lu\n",
+                  days,
+                  hours % 24,
+                  minutes % 60,
+                  seconds % 60);
+
+    // ========== System Commands ==========
   } else if (command == "reset") {
     Serial.println("Resetting config to defaults...");
     resetConfig();
     printConfig();
     Serial.println("Note: Reboot required for changes to take effect");
-    
+
   } else if (command == "reboot" || command == "restart") {
     Serial.println("Rebooting in 1 second...");
     delay(1000);
     ESP.restart();
-    
+
   } else if (command == "help" || command == "?") {
     Serial.println("=== LAMA Commands ===");
     Serial.println("\nNode Configuration:");
@@ -556,11 +561,11 @@ void handleSerialCommand() {
     Serial.println("  netid <0-255>       - Set network ID");
     Serial.println("  cap <hex>           - Set capabilities (e.g. FF)");
     Serial.println("  user <name>         - Set username");
-    
+
     Serial.println("\nOLED Pin Configuration:");
     Serial.println("  oled_sda <pin>      - Set OLED SDA pin");
     Serial.println("  oled_scl <pin>      - Set OLED SCL pin");
-    
+
     Serial.println("\nLoRa Pin Configuration:");
     Serial.println("  lora_sck <pin>      - Set LoRa SCK pin");
     Serial.println("  lora_miso <pin>     - Set LoRa MISO pin");
@@ -568,7 +573,7 @@ void handleSerialCommand() {
     Serial.println("  lora_cs <pin>       - Set LoRa CS pin");
     Serial.println("  lora_rst <pin>      - Set LoRa RST pin");
     Serial.println("  lora_irq <pin>      - Set LoRa IRQ pin");
-    
+
     Serial.println("\nLoRa RF Parameters:");
     Serial.println("  freq <MHz>          - Set frequency (e.g. 868.0)");
     Serial.println("  bw <kHz>            - Set bandwidth (125, 250, 500)");
@@ -580,36 +585,36 @@ void handleSerialCommand() {
     Serial.println("  crc [on|off]        - Toggle or set CRC");
     Serial.println("  afc [on|off]        - Toggle or set AFC");
     Serial.println("  afcbw <kHz>         - Set AFC bandwidth");
-    
+
     Serial.println("\nTiming:");
     Serial.println("  txint <ms>          - Set TX interval");
     Serial.println("  rxtimeout <ms>      - Set RX timeout");
-    
+
     Serial.println("\nWiFi:");
     Serial.println("  ssid <name>         - Set WiFi SSID");
     Serial.println("  password <pass>     - Set WiFi password");
     Serial.println("  hostname <name>     - Set WiFi hostname");
     Serial.println("  wifi [on|off|       - Enable/disable WiFi");
     Serial.println("       status|reconnect]");
-    
+
     Serial.println("\nNetwork:");
     Serial.println("  ping <nodeid>       - Ping specific node");
     Serial.println("  discover            - Send discovery broadcast");
     Serial.println("  announce            - Send announce broadcast");
     Serial.println("  nodes               - Show discovered nodes");
-    
+
     Serial.println("\nInformation:");
     Serial.println("  show / config       - Show current configuration");
     Serial.println("  stats / users       - Show network statistics");
     Serial.println("  mem / memory        - Show memory information");
     Serial.println("  uptime              - Show system uptime");
-    
+
     Serial.println("\nSystem:");
     Serial.println("  reset               - Reset to defaults");
     Serial.println("  reboot / restart    - Restart device");
     Serial.println("  help / ?            - Show this help");
     Serial.println("====================");
-    
+
   } else {
     Serial.printf("Unknown command: '%s' (type 'help' for commands)\n", command.c_str());
   }

@@ -1,0 +1,48 @@
+---
+BasedOnStyle: Google
+Language: Cpp
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 100
+ContinuationIndentWidth: 4
+
+# Alignment (for enums, assignments)
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignTrailingComments: true
+AlignOperands: Align  # Align all operands
+
+# Pointer/Reference
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# Function arguments
+BinPackArguments: false
+BinPackParameters: false
+AlignAfterOpenBracket: Align
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+
+# Line breaking
+BreakBeforeBinaryOperators: NonAssignment  # Break before + but after =
+BreakBeforeBraces: Attach
+BreakConstructorInitializers: BeforeColon
+
+# Short constructs
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+
+# Penalties (fine-tune breaking behavior)
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyBreakAssignment: 50
+PenaltyBreakString: 100
+PenaltyExcessCharacter: 1000
+
+# Other
+SpaceAfterCStyleCast: false
+SpaceBeforeParens: ControlStatements
+IndentCaseLabels: true
