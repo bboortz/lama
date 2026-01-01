@@ -23,9 +23,9 @@ int       rxHistoryCount = 0;
 #define MAX_USERS 5
 struct UserStats {
   String name;
-  uint16_t    lastSeq;
-  uint16_t    received;
-  uint16_t    lost;
+  int32_t    lastSeq;
+  int32_t    received;
+  int32_t    lost;
   // Signal quality per user
   float lastRssi;
   float lastSnr;
