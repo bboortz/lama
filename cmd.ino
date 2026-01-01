@@ -311,7 +311,7 @@ void cmdCrc(String value) {
 }
 
 void cmdAfc(String value) {
- if (value == "0" || value == "1") {
+  if (value == "0" || value == "1") {
     config.loraAfc = value.toInt();
   } else {
     Serial.printf("Wrong parameter: %s. Try: 0 or 1\n", value);
@@ -413,7 +413,7 @@ void cmdHostname(String value) {
 
 void cmdWifiEnable(String value) {
   if (value == "1" || value == "0") {
-    config.wifiEnabled = bool ( value.toInt() );
+    config.wifiEnabled = bool(value.toInt());
     saveConfig();
     Serial.printf("WiFi enabled = %s (reboot required)\n", config.wifiEnabled ? "true" : "false");
   }
@@ -423,14 +423,14 @@ void cmdWifiCommand(String value) {
   if (value == "status") {
     Serial.println("WiFi Status:");
     Serial.printf("  Enabled:  %s\n", config.wifiEnabled ? "YES" : "NO");
-    
+
     Serial.printf("  Status:   %s\n", getWifiStatus());
     if (WiFi.status() == WL_CONNECTED) {
       Serial.printf("  SSID:     %s\n", WiFi.SSID().c_str());
       Serial.printf("  IP:       %s\n", WiFi.localIP().toString().c_str());
       Serial.printf("  Signal:   %d dBm\n", WiFi.RSSI());
       Serial.printf("  Hostname: %s\n", WiFi.getHostname());
-    } 
+    }
   } else if (value == "reconnect") {
     Serial.println("Reconnecting to WiFi...");
     WiFi.disconnect();

@@ -81,6 +81,20 @@ void parsePacket(String data, String* user, int* seq, int* msecs, float* rsnr) {
   }
 }
 
+void handleRxError(int errorCode) {
+  switch (errorCode) {
+    case RADIOLIB_ERR_RX_TIMEOUT:
+      Serial.println("RX Timeout!");
+      break;
+    case RADIOLIB_ERR_CRC_MISMATCH:
+      Serial.println("CRC error!");
+      break;
+    default:
+      Serial.printf("Receive failed, error: %d\n", errorCode);
+      break;
+  }
+}
+
 void decodePacket(void) {
   if (systemState != DO_RX) {
     return;
@@ -130,14 +144,9 @@ void decodePacket(void) {
       setLoraNetworkState(CONNECTED);
       addToRxHistory(receivedUsername, receivedSeq, receivedMSecs, snr, rssi, freqErr, receivedSnr);
 
-    } else if (rxState == RADIOLIB_ERR_RX_TIMEOUT) {
-      Serial.println("RX Timeout!");
-
-    } else if (rxState == RADIOLIB_ERR_CRC_MISMATCH) {
-      Serial.println("CRC error!");
-
     } else {
-      Serial.printf("Receive failed, error: %d\n", rxState);
+      // Handle ALL errors with one handler
+      handleRxError(rxState);
     }
 
     enableRX();
