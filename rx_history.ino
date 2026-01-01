@@ -108,7 +108,6 @@ void printUserStats() {
       quality = "Poor";
     }
     Serial.printf("  Quality:  %s\n", quality.c_str());
-    
   }
   Serial.println("\n=======================");
 }

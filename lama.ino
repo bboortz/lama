@@ -2,9 +2,10 @@
 todos
 * packet
 */
-#include <cstdint>
 #include <SPI.h>
 #include <Wire.h>
+
+#include <cstdint>
 
 #include "config.h"
 #include "display.h"
