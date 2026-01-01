@@ -8,5 +8,4 @@ struct ParsedLoraPacket {
   float  rsnr;
 };
 
-
 #endif

@@ -27,7 +27,6 @@ int txState       = 0;
 
 String currentMethod = "setup()";
 
-
 #define setStatus(state) setStatusInternal(state, __func__)
 
 #endif

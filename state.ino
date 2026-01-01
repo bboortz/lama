@@ -84,7 +84,6 @@ int doRadiolibState(int state) {
   return 0;
 }
 
-
 void setStatusInternal(SystemStateEnum newState, const char* newMethod) {
   setSystemState(newState);
   currentMethod = (String)newMethod;

@@ -53,7 +53,6 @@ void onPacketRX(void) {
   setSystemState(DO_RX);
 }
 
-
 void handleRxError(int errorCode) {
   switch (errorCode) {
     case RADIOLIB_ERR_RX_TIMEOUT:
@@ -72,13 +71,13 @@ void receivePacket(void) {
   if (systemState != DO_RX) {
     return;
   }
-  
+
   setStatus(IN_RX);
   decodeLoraPacket();
 
   enableRX();
   updateStatus();
-  
+
   setStatus(IDLE);
 }
 
