@@ -159,12 +159,11 @@ void printConfig() {
   Serial.printf("  Password:       %s\n",
                 strlen(config.wifiPassword) > 0 ? "********" : "(not set)");
   Serial.printf("  Hostname:       %s\n", config.wifiHostname);
+  
+  Serial.printf("  Status:         %s\n", getWifiStatus() );
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.printf("  Status:         Connected\n");
     Serial.printf("  IP Address:     %s\n", WiFi.localIP().toString().c_str());
     Serial.printf("  Signal:         %d dBm\n", WiFi.RSSI());
-  } else {
-    Serial.printf("  Status:         Disconnected\n");
   }
 
   Serial.println("\nMemory:");

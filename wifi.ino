@@ -245,3 +245,22 @@ void handleWifi() {
     server->handleClient();  // Call this in main loop
   }
 }
+
+
+String getWifiStatus() {
+  switch (WiFi.status()) {
+    case WL_IDLE_STATUS:
+      return "Idle";
+
+    case WL_CONNECTED:
+      return "Connected";
+
+    case WL_DISCONNECTED:
+      return "Disconnected";
+
+    case WL_STOPPED:
+      return "Stopped";
+  }
+
+  return "ERROR";
+}
