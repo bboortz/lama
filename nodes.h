@@ -16,16 +16,16 @@ struct NodeInfo {
   uint32_t lastSeen;
   float    lastRssi;
   float    lastSnr;
-  float    lastFreqErr;  // TODO
-  float    minRssi;      // TODO
-  float    minSnr;       // TODO
-  float    minFreqErr;   // TODO
-  float    maxRssi;      // TODO
-  float    maxSnr;       // TODO
-  float    maxFreqErr;   // TODO
-  float    avgRssi;      // TODO
-  float    avgSnr;       // TODO
-  float    avgFreqErr;   // TODO
+  float    lastFreqErr;
+  float    minRssi;
+  float    minSnr;
+  float    minFreqErr;
+  float    maxRssi;
+  float    maxSnr;
+  float    maxFreqErr;
+  float    avgRssi;
+  float    avgSnr;
+  float    avgFreqErr;
   uint16_t rxCount;
   uint16_t lostCount;
   int      lastSeq;

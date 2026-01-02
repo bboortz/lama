@@ -37,7 +37,6 @@
 #define DEFAULT_RX_TIMEOUT 10000  // 10 seconds without RX = lost
 
 // Wifi
-// WiFi defaults
 #define DEFAULT_WIFI_ENABLED true
 #define DEFAULT_WIFI_HOSTNAME "lama"
 

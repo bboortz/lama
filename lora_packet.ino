@@ -70,32 +70,6 @@ void handleLoraBeat(LoraPacket pkt, size_t pktLength) {
 
   // printLoraPacket(pkt, pktLength);
 
-  // Loss detection
-  /*
-  UserStats* stats = findOrCreateUser(String(pkt.header.src.node));
-  if (stats) {
-    uint16_t seqDiff = pkt.header.seq - (uint16_t)stats->lastSeq;
-    if (stats->received > 0 && seqDiff > 1 && seqDiff < 1000) {  // 1000 = sanity check
-      int lost = seqDiff - 1;
-      stats->lost += lost;
-      rxPacketLost += lost;
-      addError("Packet lost");
-      Serial.printf("*** LOST %d packets!\n", lost);
-    }
-    stats->lastSeq = pkt.header.seq;
-    stats->received++;
-
-    updateUserSignalStats(stats, rssi, snr, freqErr);
-
-    if (stats->received > 10 && rssi < stats->avgRssi - 10) {
-      addError("Signal degraded");
-      Serial.printf("WARNING: %s signal degraded by %.0f dB!\n",
-                    stats->name.c_str(),
-                    stats->avgRssi - rssi);
-    }
-  }
-  */
-
   setLoraNetworkState(CONNECTED);
 
   // Add to Lora RX Statistics
@@ -164,23 +138,6 @@ int transmitLoraPacket(LoraPacket* pkt) {
   }
 
   // printLoraPacket(*pkt, len);
-  /*
-  // Cast payload for printing if it's a Beat payload
-  if (pkt->header.payloadLen == sizeof(LoraPacketBeatPayload)) {
-    LoraPacketBeatPayload* p = reinterpret_cast<LoraPacketBeatPayload*>(pkt->payload);
-
-    char buf[64];
-    snprintf(buf,
-             sizeof(buf),
-             "%u %u %u %u %u %.2f",
-             pkt->header.type,
-             pkt->header.seq,
-             pkt->header.src.node,
-             pkt->header.payloadLen,
-             p->msecs,
-             p->rsnr);
-    txMessage = String(buf);
-  }*/
 
   LoraPacketBeatPayload p = {};
   memcpy(&p, pkt->payload, sizeof(LoraPacketBeatPayload));

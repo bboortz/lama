@@ -55,15 +55,6 @@ struct LoraPacket {
   uint8_t payload[LORA_MAX_PAYLOAD];
 };
 
-// Payloads
-/*
-struct BeatPayload {
-  uint16_t battery;
-  int8_t   rssi;
-  uint8_t  uptime;
-};
-*/
-
 constexpr size_t LORA_HEADER_SIZE       = sizeof(LoraPacketHeader);
 constexpr size_t LORA_BEAT_PAYLOAD_SIZE = sizeof(LoraPacketBeatPayload);
 constexpr size_t LORA_BEAT_PACKET_SIZE  = LORA_HEADER_SIZE + LORA_BEAT_PAYLOAD_SIZE;

@@ -67,37 +67,8 @@ void displayStatus(void) {
 
   if (systemState != FATAL) {
     display->println(errorHistory[0]);
-
-    // Per-user signal quality
-    /*
-        if (userCount > 0) {
-          display->println(" Node SEQ ASNR SNR L%");
-          for (int i = 0; i < userCount && i < 3; i++) {
-            UserStats* s       = &userStats[i];
-            int        total   = s->received + s->lost;
-            int        lossPct = (total > 0) ? (100 * s->lost / total) : 0;
-
-            char nameBuffer[7];
-            strncpy(nameBuffer, s->name.c_str(), 6);
-            nameBuffer[6] = '\0';
-
-            char line[22];
-
-            snprintf(line,
-                     sizeof(line),
-                     "%5.5s %03d %4.0f %3.0f %2d",
-                     nameBuffer,
-                     s->lastSeq % 1000,
-                     s->avgSnr,
-                     s->lastSnr,
-                     lossPct);
-
-            display->println(line);
-          }
-        }
-        */
-
     displayNodes();
+
   } else {
     display->println(currentMethod);
     display->println("RL:" + String(radiolibState) + " RX:" + String(rxState)

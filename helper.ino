@@ -8,12 +8,6 @@ String padRight(String str, int width) {
   return str;
 }
 
-String padZeroRight(int num, int digits) {
-  char buffer[8];
-  sprintf(buffer, "%0*d", digits, num % (int)pow(10, digits));
-  return String(buffer);
-}
-
 String getProgressStar() {
   static int   counter = 0;
   const String chars[] = {"/", "-", "\\", "|"};
