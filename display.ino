@@ -83,7 +83,7 @@ void displayNodes() {
   if (nodeCount > 0) {
     display->println(" Node SEQ ASNR SNR L%");
     for (int i = 0; i < nodeCount; i++) {
-      NodeInfo* n       = &knownNodes[i];
+      const NodeInfo* n       = &knownNodes[i];
       int       total   = n->rxCount + n->lostCount;
       int       lossPct = (total > 0) ? (100 * n->lostCount / total) : 0;
 
