@@ -30,6 +30,8 @@ help:                     ## printing out the help
 
 
 
+diff:                     ## git diff
+	@git diff
 
 format:                   ## formatting all files
 	@echo "Formatting code..."

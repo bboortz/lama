@@ -470,11 +470,9 @@ void cmdAnnounce(String value) {
   Serial.println("Announce broadcast sent");
 }
 */
-/*
 void cmdNodes(String value) {
   printNodes();
 }
-*/
 
 // Statistics and Info
 void cmdMemory(String value) {

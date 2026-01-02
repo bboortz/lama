@@ -12,10 +12,14 @@ todos
 #include "display.h"
 #include "lora.h"
 #include "lora_packet.h"
-#include "rx_history.h"
+#include "lora_stats.h"
+#include "nodes.h"
 #include "serial.h"
 #include "state.h"
 #include "wifi.h"
+
+#define PROG_NAME "LAMA"
+#define PROG_VER "0.1.0"
 
 void setupBoard() {
   currentMethod = "setup()";

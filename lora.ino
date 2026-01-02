@@ -111,7 +111,7 @@ void transmitPacket(void) {
     return;
   }
   setStatus(IN_TX);
-  txPacketCount++;
+  loraTxPacketCount++;
   lastTxTime = millis();
 
   // Build message

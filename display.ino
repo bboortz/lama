@@ -39,15 +39,15 @@ void displayStatusHeader(void) {
     return;  // check if a display is available
   }
 
-  uint32_t totalExpected = rxPacketCount + rxPacketLost;
-  uint32_t lossPercent   = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
+  uint32_t totalExpected = loraRxPacketCount + loraRxPacketLost;
+  uint32_t lossPercent   = (totalExpected > 0) ? (100 * loraRxPacketLost / totalExpected) : 0;
   uint32_t rxAgo         = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
 
   String header       = getProgressStar() + " LAMA " + txMessage + padRight(getProgressStar(), 3);
   String stateMessage = getState();
   String functionMessage = "F " + currentMethod;
-  String statsMessage    = padRight("R:" + String(rxPacketCount), 5) + " "
-                        + padRight("T:" + String(txPacketCount), 5) + " "
+  String statsMessage    = padRight("R:" + String(loraRxPacketCount), 5) + " "
+                        + padRight("T:" + String(loraRxPacketCount), 5) + " "
                         + padRight("L:" + String(lossPercent) + "%", 5) + " "
                         + padRight(String(rxAgo), 3);
 
@@ -69,31 +69,35 @@ void displayStatus(void) {
     display->println(errorHistory[0]);
 
     // Per-user signal quality
+    /*
+        if (userCount > 0) {
+          display->println(" Node SEQ ASNR SNR L%");
+          for (int i = 0; i < userCount && i < 3; i++) {
+            UserStats* s       = &userStats[i];
+            int        total   = s->received + s->lost;
+            int        lossPct = (total > 0) ? (100 * s->lost / total) : 0;
 
-    if (userCount > 0) {
-      display->println(" Node SEQ ASNR SNR L%");
-      for (int i = 0; i < userCount && i < 3; i++) {
-        UserStats* s       = &userStats[i];
-        int        total   = s->received + s->lost;
-        int        lossPct = (total > 0) ? (100 * s->lost / total) : 0;
+            char nameBuffer[7];
+            strncpy(nameBuffer, s->name.c_str(), 6);
+            nameBuffer[6] = '\0';
 
-        char nameBuffer[7];
-        strncpy(nameBuffer, s->name.c_str(), 6);
-        nameBuffer[6] = '\0';
+            char line[22];
 
-        char line[22];
-        snprintf(line,
-                 sizeof(line),
-                 "%5.5s %03d %4.0f %3.0f %2d",
-                 nameBuffer,
-                 s->lastSeq % 1000,
-                 s->avgSnr,
-                 s->lastSnr,
-                 lossPct);
+            snprintf(line,
+                     sizeof(line),
+                     "%5.5s %03d %4.0f %3.0f %2d",
+                     nameBuffer,
+                     s->lastSeq % 1000,
+                     s->avgSnr,
+                     s->lastSnr,
+                     lossPct);
 
-        display->println(line);
-      }
-    }
+            display->println(line);
+          }
+        }
+        */
+
+    displayNodes();
   } else {
     display->println(currentMethod);
     display->println("RL:" + String(radiolibState) + " RX:" + String(rxState)
@@ -102,6 +106,29 @@ void displayStatus(void) {
   }
 
   display->display();
+}
+
+void displayNodes() {
+  if (nodeCount > 0) {
+    display->println(" Node SEQ ASNR SNR L%");
+    for (int i = 0; i < nodeCount; i++) {
+      NodeInfo* n       = &knownNodes[i];
+      int       total   = n->rxCount + n->lostCount;
+      int       lossPct = (total > 0) ? (100 * n->lostCount / total) : 0;
+
+      char line[22];
+      snprintf(line,
+               sizeof(line),
+               "%5d %03d %4.0f %3.0f %2d",
+               n->nodeId,
+               n->lastSeq % 1000,
+               n->avgSnr,
+               n->lastSnr,
+               lossPct);
+
+      display->println(line);
+    }
+  }
 }
 
 void displayAllErrors(void) {

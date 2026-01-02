@@ -68,9 +68,10 @@ void handleLoraBeat(LoraPacket pkt, size_t pktLength) {
   LoraPacketBeatPayload p = {};
   memcpy(&p, pkt.payload, sizeof(LoraPacketBeatPayload));
 
-  printLoraPacket(pkt, pktLength);
+  // printLoraPacket(pkt, pktLength);
 
   // Loss detection
+  /*
   UserStats* stats = findOrCreateUser(String(pkt.header.src.node));
   if (stats) {
     uint16_t seqDiff = pkt.header.seq - (uint16_t)stats->lastSeq;
@@ -93,21 +94,15 @@ void handleLoraBeat(LoraPacket pkt, size_t pktLength) {
                     stats->avgRssi - rssi);
     }
   }
+  */
 
   setLoraNetworkState(CONNECTED);
 
-  addToRxHistory(String(pkt.header.src.node), pkt.header.seq, p.msecs, snr, rssi, freqErr, p.rsnr);
+  // Add to Lora RX Statistics
+  addToLoraRxStats(pkt.header.src.node, pkt.header.seq, p.msecs, snr, rssi, freqErr, p.rsnr);
 
-  // NodeInfo* node = findNode(pkt->header.srcNode);
-  /*
-   if (node) {
-     Serial.printf("Beat from %s: bat=%dmV rssi=%d uptime=%dh\n",
-                   node->name,
-                   p->battery,
-                   p->rssi,
-                   p->uptime);
-   }
-   */
+  // Update node tracking
+  updateNodeStats(pkt.header.src.node, rssi, snr, freqErr, pkt.header.seq);
 }
 
 LoraPacket parseLoraPacket(const uint8_t* data, size_t pktLength) {
@@ -148,7 +143,7 @@ void decodeLoraPacket(void) {
     LoraPacket packet = parseLoraPacket(data, pktLength);
     // printLoraPacket(packet, pktLength);
 
-    rxPacketCount++;
+    loraRxPacketCount++;
     lastRxTime = millis();
     handleLoraBeat(packet, pktLength);
   }
@@ -168,7 +163,7 @@ int transmitLoraPacket(LoraPacket* pkt) {
     return txState;
   }
 
-  printLoraPacket(*pkt, len);
+  // printLoraPacket(*pkt, len);
   /*
   // Cast payload for printing if it's a Beat payload
   if (pkt->header.payloadLen == sizeof(LoraPacketBeatPayload)) {
@@ -189,7 +184,8 @@ int transmitLoraPacket(LoraPacket* pkt) {
 
   LoraPacketBeatPayload p = {};
   memcpy(&p, pkt->payload, sizeof(LoraPacketBeatPayload));
-  txMessage = padRight("S:" + String(txPacketCount), 5) + " " + padRight("M:" + String(p.msecs), 5);
+  txMessage = padRight("S:" + String(loraTxPacketCount), 5) + " "
+              + padRight("M:" + String(p.msecs), 5);
 
   return txState;
 }
@@ -237,7 +233,7 @@ LoraPacket createEmptyPacket() {
 
 int sendLoraBeat() {
   int        m   = millis() % 100;
-  LoraPacket pkt = createLoraBeatPacket(config.nodeId, txPacketCount, m, getLastSnr());
+  LoraPacket pkt = createLoraBeatPacket(config.nodeId, loraTxPacketCount, m, getLastSnr());
 
   txState = transmitLoraPacket(&pkt);
   return txState;

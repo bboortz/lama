@@ -35,10 +35,10 @@ void setupWebServer() {
 
   // REST API endpoints - BLOCKING but simpler
   server->on("/api/status", HTTP_GET, []() {
-    int           totalExpected = rxPacketCount + rxPacketLost;
-    int           lossPercent   = (totalExpected > 0) ? (100 * rxPacketLost / totalExpected) : 0;
-    unsigned long rxAgo         = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
-    unsigned long txAgo         = (lastTxTime > 0) ? (millis() - lastTxTime) / 1000 : 999;
+    int           totalExpected = loraRxPacketCount + loraRxPacketLost;
+    int           lossPercent = (totalExpected > 0) ? (100 * loraRxPacketLost / totalExpected) : 0;
+    unsigned long rxAgo       = (lastRxTime > 0) ? (millis() - lastRxTime) / 1000 : 999;
+    unsigned long txAgo       = (lastTxTime > 0) ? (millis() - lastTxTime) / 1000 : 999;
 
     String json = "{";
     json += "\"nodeId\":" + String(config.nodeId) + ",";
@@ -48,9 +48,9 @@ void setupWebServer() {
     json += "\"state\":\"" + getSystemState() + "\",";
     json += "\"loraState\":\"" + getLoraNetworkState() + "\",";
     json += "\"wifiState\":\"" + getWifiNetworkState() + "\",";
-    json += "\"rxCount\":" + String(rxPacketCount) + ",";
-    json += "\"txCount\":" + String(txPacketCount) + ",";
-    json += "\"lostCount\":" + String(rxPacketLost) + ",";
+    json += "\"rxCount\":" + String(loraRxPacketCount) + ",";
+    json += "\"txCount\":" + String(loraTxPacketCount) + ",";
+    json += "\"lostCount\":" + String(loraRxPacketLost) + ",";
     json += "\"lossPercent\":" + String(lossPercent) + ",";
     json += "\"lastRxAgo\":" + String(rxAgo) + ",";
     json += "\"lastTxAgo\":" + String(txAgo) + ",";
@@ -75,36 +75,7 @@ void setupWebServer() {
     }
   });
 
-  // User statistics
-  server->on("/api/users", HTTP_GET, []() {
-    String json = "[";
-    for (int i = 0; i < userCount; i++) {
-      if (i > 0)
-        json += ",";
-      UserStats* s       = &userStats[i];
-      int        total   = s->received + s->lost;
-      int        lossPct = (total > 0) ? (100 * s->lost / total) : 0;
-
-      json += "{";
-      json += "\"name\":\"" + s->name + "\",";
-      json += "\"received\":" + String(s->received) + ",";
-      json += "\"lost\":" + String(s->lost) + ",";
-      json += "\"lossPercent\":" + String(lossPct) + ",";
-      json += "\"lastSeq\":" + String(s->lastSeq) + ",";
-      json += "\"lastRssi\":" + String(s->lastRssi, 1) + ",";
-      json += "\"lastSnr\":" + String(s->lastSnr, 1) + ",";
-      json += "\"avgRssi\":" + String(s->avgRssi, 1) + ",";
-      json += "\"avgSnr\":" + String(s->avgSnr, 1) + ",";
-      json += "\"minRssi\":" + String(s->minRssi, 1) + ",";
-      json += "\"maxRssi\":" + String(s->maxRssi, 1);
-      json += "}";
-    }
-    json += "]";
-    server->send(200, "application/json", json);
-  });
-
   // Known nodes
-  /*
   server->on("/api/nodes", HTTP_GET, []() {
     String json = "[";
     for (int i = 0; i < nodeCount; i++) {
@@ -131,18 +102,17 @@ void setupWebServer() {
     json += "]";
     server->send(200, "application/json", json);
   });
-  */
 
   // RX History
   server->on("/api/history", HTTP_GET, []() {
     String json = "[";
-    for (int i = 0; i < rxHistoryCount; i++) {
+    for (int i = 0; i < loraRxHistoryCount; i++) {
       if (i > 0)
         json += ",";
-      RxMessage* m = &rxHistory[i];
+      LoraRxStatsMessage* m = &loraRxHistory[i];
 
       json += "{";
-      json += "\"user\":\"" + m->user + "\",";
+      json += "\"nodeId\":\"" + String(m->nodeId) + "\",";
       json += "\"seq\":" + String(m->seq) + ",";
       json += "\"msecs\":" + String(m->msecs) + ",";
       json += "\"snr\":" + String(m->snr, 1) + ",";
@@ -191,20 +161,20 @@ button:hover{background:#0056b3}
 <button onclick="loadData()">Refresh</button>
 <button onclick="location.href='/api/status'">JSON</button>
 </div>
-<div class="card"><h2>Users (<span id="userCount">0</span>)</h2>
-<table><thead><tr><th>User</th><th>RX</th><th>Lost</th><th>Loss%</th><th>RSSI</th><th>SNR</th></tr></thead>
-<tbody id="usersBody"></tbody></table></div>
 <div class="card"><h2>Nodes (<span id="nodeCount">0</span>)</h2>
 <table><thead><tr><th>ID</th><th>Name</th><th>RX</th><th>Lost</th><th>Loss%</th><th>RSSI</th><th>SNR</th><th>Seen</th></tr></thead>
 <tbody id="nodesBody"></tbody></table></div>
+<div class="card"><h2>RX History (<span id="historyCount">0</span>)</h2>
+<table><thead><tr><th>Node</th><th>Seq</th><th>RSSI</th><th>SNR</th><th>FreqErr</th><th>rSNR</th><th>ms</th></tr></thead>
+<tbody id="historyBody"></tbody></table></div>
 </div>
 <script>
-function loadData(){fetch('/api/status').then(r=>r.json()).then(s=>{
-fetch('/api/users').then(r=>r.json()).then(u=>{
+function loadData(){
+fetch('/api/status').then(r=>r.json()).then(s=>{
 fetch('/api/nodes').then(r=>r.json()).then(n=>{
+fetch('/api/history').then(r=>r.json()).then(h=>{
 document.getElementById('systemStats').innerHTML=
 '<div class="stat"><div class="stat-label">Node</div><div class="stat-value">'+s.nodeId+'</div></div>'+
-'<div class="stat"><div class="stat-label">User</div><div class="stat-value">'+s.user+'</div></div>'+
 '<div class="stat"><div class="stat-label">State</div><div class="stat-value">'+s.state+'</div></div>'+
 '<div class="stat"><div class="stat-label">Uptime</div><div class="stat-value">'+Math.floor(s.uptime/3600)+'<span class="stat-unit">h</span></div></div>'+
 '<div class="stat"><div class="stat-label">Heap</div><div class="stat-value">'+Math.floor(s.freeHeap/1024)+'<span class="stat-unit">KB</span></div></div>'+
@@ -222,14 +192,14 @@ document.getElementById('networkStats').innerHTML=
 '<div class="stat"><div class="stat-label">Loss</div><div class="stat-value '+lc+'">'+s.lossPercent+'<span class="stat-unit">%</span></div></div>'+
 '<div class="stat"><div class="stat-label">Last RX</div><div class="stat-value">'+s.lastRxAgo+'<span class="stat-unit">s</span></div></div>'+
 '<div class="stat"><div class="stat-label">Last TX</div><div class="stat-value">'+s.lastTxAgo+'<span class="stat-unit">s</span></div></div>';
-document.getElementById('userCount').textContent=u.length;
-var uh='';for(var i=0;i<u.length;i++){var ul=u[i].lossPercent>20?'status-error':(u[i].lossPercent>5?'status-warning':'status-good');
-uh+='<tr><td><strong>'+u[i].name+'</strong></td><td>'+u[i].received+'</td><td>'+u[i].lost+'</td><td class="'+ul+'">'+u[i].lossPercent+'%</td><td>'+u[i].avgRssi.toFixed(1)+'</td><td>'+u[i].avgSnr.toFixed(1)+'</td></tr>';}
-document.getElementById('usersBody').innerHTML=uh;
 document.getElementById('nodeCount').textContent=n.length;
 var nh='';for(var i=0;i<n.length;i++){var nl=n[i].lossPercent>20?'status-error':(n[i].lossPercent>5?'status-warning':'status-good');
 nh+='<tr><td>'+n[i].nodeId+'</td><td>'+n[i].name+'</td><td>'+n[i].rxCount+'</td><td>'+n[i].lostCount+'</td><td class="'+nl+'">'+n[i].lossPercent+'%</td><td>'+n[i].lastRssi.toFixed(1)+'</td><td>'+n[i].lastSnr.toFixed(1)+'</td><td>'+n[i].lastSeenAgo+'s</td></tr>';}
 document.getElementById('nodesBody').innerHTML=nh;
+document.getElementById('historyCount').textContent=h.length;
+var hh='';for(var i=0;i<h.length;i++){
+hh+='<tr><td>'+h[i].nodeId+'</td><td>'+h[i].seq+'</td><td>'+h[i].rssi.toFixed(1)+'</td><td>'+h[i].snr.toFixed(1)+'</td><td>'+h[i].freqErr.toFixed(1)+'</td><td>'+h[i].rsnr.toFixed(1)+'</td><td>'+h[i].msecs+'</td></tr>';}
+document.getElementById('historyBody').innerHTML=hh;
 });});});}
 function transmit(){fetch('/api/tx',{method:'POST'}).then(()=>{alert('Transmitting...');setTimeout(loadData,1000);});}
 loadData();setInterval(loadData,3000);

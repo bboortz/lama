@@ -2,6 +2,7 @@
 void setupSerial() {
   // serial setup
   Serial.begin(115200);
+
 #if SERIAL_WAIT_TIMEOUT > 0
   unsigned long serialTimeout = millis() + SERIAL_WAIT_TIMEOUT;
   while (!Serial && millis() < serialTimeout) {
@@ -11,6 +12,12 @@ void setupSerial() {
   while (!Serial)
     ;  // Wait forever (debugging only)
 #endif
+
+  Serial.println();
+  Serial.println("Booting...");
+  Serial.println("Say hello to " + String(PROG_NAME) + " " + String(PROG_VER) + "!");
+  Serial.println("LoRa Analytics and Monitoring Apparatus");
+  Serial.println();
 }
 
 void handleSerialCommand() {
@@ -99,12 +106,14 @@ void handleSerialCommand() {
     } else if (command == "announce") {
       cmdAnnounce(value);
       */
+  } else if (command == "nodes") {
+    cmdNodes(value);
     /*
-} else if (command == "nodes") {
-  cmdNodes(value);
-  */
   } else if (command == "users" || command == "stats") {
     printUserStats();
+    */
+  } else if (command == "stats") {
+    printLoraRxStats();
   } else if (command == "show" || command == "config") {
     printConfig();
   } else if (command == "mem" || command == "memory") {
