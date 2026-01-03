@@ -28,24 +28,22 @@ build:              ## build the software
 	./scripts/build.sh
 b: build
 
-test: fmt build           ## test the software
+test: fmt build     ## test the software
 	./scripts/test.sh
 t: test
 
-upload: fmt build           ## upload the firmware
+
+upload: fmt build   ## upload the firmware
 	./scripts/upload.sh
+u: upload
 
 monitor:            ## monitor the device
 	./scripts/monitor.sh
+m: monitor
 
 
-doc:                 ## create the documentation
-	cargo doc
+doc:                ## create the documentation
+	echo "not implemented"
 
-init:               ## initialize
-	wget https://dl.espressif.com/dl/esp32-gcc8_4_0-linux-amd64.tar.gz
-	tar -xzf esp32-gcc8_4_0-linux-amd64.tar.gz
 
-debug:
-	echo "image: $(image)"
 

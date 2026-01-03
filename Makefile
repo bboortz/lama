@@ -33,65 +33,42 @@ help:                     ## printing out the help
 diff:                     ## git diff
 	@git diff
 
-format:                   ## formatting all files
-	@echo "Formatting code..."
-	@find . -maxdepth 1 \( -name "*.ino" -o -name "*.h" -o -name "*.cpp" \) \
-	  | xargs clang-format -i --verbose
 
-braces:			  ## add braces to all files
-	@echo "Adding braces to all files..."
-	@for file in *.ino *.h *.cpp; do \
-	  [ -f "$$file" ] && echo "Fixing $$file..." && \
-	  clang-tidy -fix -fix-errors "$$file" \
-	    -checks='readability-braces-around-statements' \
-	    -- $(TIDY_FLAGS); \
-	done
+clean:              ## clean up this project
+	$(MAKE) -C lama-main-pio clean
+	$(MAKE) -C lama-packet-rust clean
+	$(MAKE) -C lama-core-rust clean
+c: clean
 
-check-braces:             ## check braces
-	@echo "Checking for missing braces..."
-	@for file in *.ino *.h *.cpp; do \
-	  [ -f "$$file" ] && \
-	  clang-tidy "$$file" \
-	    -checks='readability-braces-around-statements' \
-	    -- $(TIDY_FLAGS) 2>&1 | grep "warning:" || true; \
-	done
+fmt:                ## format the sources
+	$(MAKE) -C lama-main-pio fmt
+	$(MAKE) -C lama-packet-rust fmt
+	$(MAKE) -C lama-core-rust fmt
+f: fmt
 
-check-bugs:               ## check bugs
-	@echo "Checking for potential bugs..."
-	@for file in *.ino *.h *.cpp; do \
-	  [ -f "$$file" ] && echo "Checking $$file..." && \
-	  clang-tidy "$$file" \
-	    -checks='bugprone-*' \
-	    -- $(TIDY_FLAGS) 2>&1 | grep "warning:" || true; \
-	done
+build:              ## build the software
+	$(MAKE) -C lama-main-pio build
+	$(MAKE) -C lama-packet-rust build
+	$(MAKE) -C lama-core-rust build
+b: build
 
-check-performance:         ## check performance
-	@echo "Checking for performance issues..."
-	@for file in *.ino *.h *.cpp; do \
-	  [ -f "$$file" ] && echo "Checking $$file..." && \
-	  clang-tidy "$$file" \
-	    -checks='performance-*' \
-	    -- $(TIDY_FLAGS) 2>&1 | grep "warning:" || true; \
-	done
-
-check-all:                 ## check all
-	@echo "Running all clang-tidy checks..."
-	@for file in *.ino *.h *.cpp; do \
-	  [ -f "$$file" ] && echo "Checking $$file..." && \
-	  clang-tidy "$$file" -- $(TIDY_FLAGS) 2>&1 | grep "warning:" || true; \
-	done
-
-lint:	                   ## lint
-	@echo "Running cppcheck..."
-	@cppcheck --enable=all --std=c++11 --platform=avr8 \
-	  --suppressions-list=cppcheck-suppressions.txt \
-	  --language=c++ \
-	  --file-list=<(find . -maxdepth 1 -name "*.ino" -o -name "*.cpp" -o -name "*.h")
-
-all: check-all format lint    ## all
-	@echo "All checks complete!"
+test: fmt build     ## test the software
+	$(MAKE) -C lama-main-pio test
+	$(MAKE) -C lama-packet-rust test
+	$(MAKE) -C lama-core-rust test
+t: test
 
 
-monitor:                  ## monitor the devices using serial
-	pyserial-miniterm $(PORT) $(BAUD_RATE)
+upload: fmt build   ## upload the firmware
+	$(MAKE) -C lama-main-pio upload
+u: upload
+
+monitor:            ## monitor the device
+	$(MAKE) -C lama-main-pio monitor
+m: monitor
+
+
+doc:                ## create the documentation
+	echo "not implemented"
+
 

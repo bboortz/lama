@@ -33,13 +33,13 @@ extern "C" void app_main(void) {
 
   xTaskCreate(
       [](void* param) {
-        while (1) {
+        while (true) {
           arduino_loop();
         }
       },
       "ArduinoLoopTask",
       4096,
-      NULL,
+      nullptr,
       1,
-      NULL);
+      nullptr);
 }

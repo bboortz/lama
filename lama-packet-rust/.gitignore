@@ -15,3 +15,4 @@ tmp/
 
 *.tar.gz
 xtensa-esp32-elf/
+integration_tests/c_integration_test

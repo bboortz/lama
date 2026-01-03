@@ -97,7 +97,7 @@ struct Config {
   char wifiHostname[32];
 };
 
-extern Config config;
+extern struct Config config;
 
 void loadConfig(void);
 void saveConfig(void);

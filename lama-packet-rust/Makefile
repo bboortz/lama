@@ -28,18 +28,16 @@ build:              ## build the software
 	./scripts/build.sh
 b: build
 
-test: fmt build           ## test the software
+test: fmt build     ## test the software
 	./scripts/test.sh
 t: test
 
 
-doc:                 ## create the documentation
+doc:                ## create the documentation
 	cargo doc
 
 init:               ## initialize
 	wget https://dl.espressif.com/dl/esp32-gcc8_4_0-linux-amd64.tar.gz
 	tar -xzf esp32-gcc8_4_0-linux-amd64.tar.gz
 
-debug:
-	echo "image: $(image)"
 
