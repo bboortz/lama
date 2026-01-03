@@ -9,6 +9,10 @@ CURDIR=${CURFILE%/*}
 
 set -x
 
+cd ../lama-core-rust
+PROFILE=release make build
+cd -
+
 cd ../lama-packet-rust
 PROFILE=release make build
 cd -
