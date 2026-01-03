@@ -1,0 +1,10 @@
+# Ignore missing ESP-IDF/Arduino includes
+missingInclude
+
+# FreeRTOS task function signature requirement
+constParameterPointer:src/main.cpp
+
+# Reduce noise
+missingIncludeSystem
+unmatchedSuppression
+checkersReport
