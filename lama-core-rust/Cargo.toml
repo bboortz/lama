@@ -1,0 +1,49 @@
+[package]
+name = "lama-core"
+version = "0.1.0"
+edition = "2024"
+authors = ["Benjamin Boortz <benjamin.boortz@secure.mailbox.org>"]
+description = "LAMA core functionalities"
+categories = ["lora", "config", "no-std"]
+keywords = ["lora", "config", "no-std"]
+license = "MIT"
+repository = "https://github.com/bboortz/lama"
+documentation = "https://docs.rs/rboot"
+# rust-version = "1.56"
+
+[lib]
+name = "lama_core"
+crate-type = ["staticlib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "esp32"
+path = "src/bin/esp32.rs"
+test = false
+bench = false
+required-features = ["esp32"]
+
+[profile.dev]
+opt-level = 0
+incremental = true
+panic = 'abort' # removes the need for this extra unwinding code.
+
+[profile.test]
+opt-level = 0
+incremental = false
+# panic = 'abort' # removes the need for this extra unwinding code.
+
+[profile.release]
+opt-level = 's'  # Optimize for size.
+lto = true # Link Time Optimization (LTO)
+panic = 'abort' # removes the need for this extra unwinding code.
+codegen-units = 1 # Set this to 1 to allow for maximum size reduction optimizations:
+
+[dependencies]
+# panic-halt is only needed for no_std / embedded targets
+panic-halt = { version = "1.0.0", optional = true }
+
+[features]
+# Enable this feature when building for ESP32 bare-metal (no_std)
+default = []
+esp32 = ["panic-halt"]

@@ -1,0 +1,34 @@
+#![no_std]
+#![no_main]
+
+pub mod lora_packet;
+
+pub use lora_packet::*;
+
+// #[warn(unused_imports)]
+
+#[cfg(not(test))]
+use core::panic::PanicInfo;
+
+#[cfg(not(test))]
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    loop {}
+}
+
+#[unsafe(link_section = ".iram1.text")]
+#[unsafe(no_mangle)]
+pub extern "C" fn lama_packet_callable() -> bool {
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lama_packet_callable() {
+        let result = lama_packet_callable();
+        assert_eq!(result, true);
+    }
+}
