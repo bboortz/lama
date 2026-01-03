@@ -1,0 +1,6 @@
+# Custom linker flags for Rust library integration
+# This file extends the ESP32 Arduino platform configuration
+
+# Add the Rust static library to the linker command
+compiler.c.elf.extra_flags=-L{build.source.path} -llama_packet
+compiler.cpp.extra_flags=
