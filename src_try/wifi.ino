@@ -169,7 +169,7 @@ button:hover{background:#0056b3}
 <tbody id="historyBody"></tbody></table></div>
 </div>
 <script>
-function loadData(){
+const loadData=()=>{
 fetch('/api/status').then(r=>r.json()).then(s=>{
 fetch('/api/nodes').then(r=>r.json()).then(n=>{
 fetch('/api/history').then(r=>r.json()).then(h=>{
@@ -200,8 +200,8 @@ document.getElementById('historyCount').textContent=h.length;
 var hh='';for(var i=0;i<h.length;i++){
 hh+='<tr><td>'+h[i].nodeId+'</td><td>'+h[i].seq+'</td><td>'+h[i].rssi.toFixed(1)+'</td><td>'+h[i].snr.toFixed(1)+'</td><td>'+h[i].freqErr.toFixed(1)+'</td><td>'+h[i].rsnr.toFixed(1)+'</td><td>'+h[i].msecs+'</td></tr>';}
 document.getElementById('historyBody').innerHTML=hh;
-});});});}
-function transmit(){fetch('/api/tx',{method:'POST'}).then(()=>{alert('Transmitting...');setTimeout(loadData,1000);});}
+});});});};
+const transmit=()=>{fetch('/api/tx',{method:'POST'}).then(()=>{alert('Transmitting...');setTimeout(loadData,1000);});};
 loadData();setInterval(loadData,3000);
 </script>
 </body></html>
@@ -229,8 +229,9 @@ String getWifiStatus() {
     case WL_DISCONNECTED:
       return "Disconnected";
 
-    case WL_STOPPED:
-      return "Stopped";
+    // WL_STOPPED not available in this ESP32 Arduino core version
+    // case WL_STOPPED:
+    //   return "Stopped";
   }
 
   return "ERROR";

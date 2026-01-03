@@ -17,6 +17,18 @@ todos
 #include "serial.h"
 #include "state.h"
 #include "wifi.h"
+#include "lama_packet.h"
+
+/*
+
+  // Validate packet
+  uint8_t data[64];
+  size_t len = radio->readData(data, 64);
+  if (validate_lora_packet(data, len)) {
+      // Packet is valid
+  }
+
+*/
 
 #define PROG_NAME "LAMA"
 #define PROG_VER "0.1.0"
@@ -51,6 +63,10 @@ void setup() {
 }
 
 void loop() {
+  // Test FFI
+  bool works = lamaPacketCallable();  // Should return true
+
+  Serial.println(works);
   displayStatus();
   handleSerialCommand();
   handleWifi();

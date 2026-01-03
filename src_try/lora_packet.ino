@@ -177,7 +177,7 @@ LoraPacket createEmptyPacket() {
   size_t           payloadLen = 0;
   LoraPacketType   type       = {PKT_EMPTY};
   LoraPacketNode   src        = {0};
-  LoraPacketHeader header = {LORA_PACKET_MAGIC, LORA_PACKET_VERSION, type, seq, src, payloadLen};
+  LoraPacketHeader header = {LORA_PACKET_MAGIC, LORA_PACKET_VERSION, type, seq, src, (uint8_t)payloadLen};
   LoraPacket       pkt    = {header};
 
   size_t actualSize = sizeof(LoraPacketHeader) + pkt.header.payloadLen;
