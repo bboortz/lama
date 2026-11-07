@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = ["core"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+rust-version = "1.80"
+
+# Size-first release profile (see docs/design/0001-layered-core.md, "Footprint policy").
+[profile.release]
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+debug = false

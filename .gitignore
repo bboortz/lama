@@ -60,3 +60,6 @@ CLAUDE.md
 
 # old files
 OLD/
+
+# Rust workspace build output
+rust/target/

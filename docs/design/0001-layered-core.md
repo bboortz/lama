@@ -245,6 +245,7 @@ rust/
 ## Migration plan
 
 1. Workspace + `core` (packet, state machine, stats) with host unit tests.
+   **Done** in `rust/core` (33 tests; builds `no_std` for `thumbv7em-none-eabihf`).
 2. `hal` traits + `boards/host` (sim radio, virtual clock) + first
    multi-node simulation.
 3. `boards/esp32` with `lora-phy` + SX127x; user flashes and reports logs.
@@ -259,7 +260,9 @@ rust/
   ESP32)? Exact ESP32 board model and pin map still to be listed.
 - Embassy vs RTIC as the executor (Embassy: async, broad HAL support; RTIC:
   smaller, interrupt-priority model). Default: Embassy.
-- Wire format: bump to v2 with the explicit layout, or stay on v1?
+- Wire format: decided in step 1 as **v2**: explicit 7-byte little-endian
+  header, fixed-point SNR/RSSI, not byte-compatible with the C++ firmware
+  (see `rust/core/src/packet.rs`). Revisit if mixed C++/Rust networks matter.
 - ESP32 variants: Xtensa (needs `espup`) or RISC-V (C3/C6)?
 - OTA: image format, signing, rollback, and flash layout per board.
 - Isolation: is MPU-based separation of services ever needed (untrusted or

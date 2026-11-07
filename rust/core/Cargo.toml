@@ -1,0 +1,10 @@
+[package]
+name = "lama-core"
+version = "0.1.0"
+description = "Hardware-independent LAMA core: packet format, link statistics, state machine"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+# No dependencies on purpose: core must stay tiny and build for every target.
+[dependencies]
