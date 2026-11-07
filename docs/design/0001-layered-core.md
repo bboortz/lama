@@ -112,12 +112,34 @@ C is allowed only where Rust has no practical option:
 All C sits behind the same HAL traits, in a board crate, never in `core`,
 `services` or `apps`.
 
+## Target boards (first two)
+
+| Board | Chip | Radio | Role |
+|---|---|---|---|
+| ESP32 + SX127x (existing LAMA hardware) | ESP32 (variant to confirm) | SX127x on SPI | First real radio target |
+| STM32F3DISCOVERY | STM32F303VC, Cortex-M4F 72 MHz, 256 KB flash, ~48 KB RAM, on-board ST-LINK/V2 | none on board | Second target: proves portability and the small footprint |
+
+STM32F3DISCOVERY radio options:
+
+- **A (preferred):** external SX127x module (RFM95/Ra-02 class) on a free SPI
+  bus (the on-board gyro uses SPI1, to be checked in the board manual), so
+  both boards share the same `lora-phy` SX127x driver.
+- **B (fallback, no purchase):** UART-bridged `Radio`: the STM32 forwards
+  frames to the ESP32, which does the RF.
+
+The on-board gyro and accelerometer/magnetometer double as the first `Imu`
+trait implementation.
+
+Pass criteria for "common ground works": same `core`/`services` crates build
+for both chips with no `cfg` outside board crates; the boards exchange
+BEAT/PING/PONG with correct RSSI/SNR/loss stats; flash/RAM within budget.
+
 ## Footprint policy
 
-The smallest board in use sets the budget. Exact boards are still to be
-listed (see open questions); the class we design for is **~256 KB flash and
-~64 KB RAM** (e.g. STM32WL, nRF52 class), which also covers ESP32 and RP2040
-with room to spare.
+The smallest board in use sets the budget. With the STM32F3DISCOVERY that is
+**256 KB flash and ~48 KB RAM** (verify against the datasheet; part of the RAM
+is CCM, which DMA cannot reach). ESP32 and other candidate chips (RP2040,
+nRF52, STM32WL) have the same or more room.
 
 Rules to keep it small:
 
@@ -226,11 +248,13 @@ rust/
 3. `boards/esp32` with `lora-phy` + SX127x; user flashes and reports logs.
 4. Shell/config/display services; LAMA app reaches parity with the C++ version.
 5. Footprint CI gate and size budgets per board.
-6. Second target (RP2040, nRF52 or STM32WL) to prove portability.
+6. STM32F3DISCOVERY as second target (radio option A or B) to prove
+   portability and the footprint budget; later RP2040, nRF52 or STM32WL.
 
 ## Open questions
 
-- Exact list of boards/chips in use (sets footprint budgets and pin maps).
+- STM32F3DISCOVERY radio: option A (SX127x module) or B (UART-bridged via
+  ESP32)? Exact ESP32 board model and pin map still to be listed.
 - Embassy vs RTIC as the executor (Embassy: async, broad HAL support; RTIC:
   smaller, interrupt-priority model). Default: Embassy.
 - Wire format: bump to v2 with the explicit layout, or stay on v1?
