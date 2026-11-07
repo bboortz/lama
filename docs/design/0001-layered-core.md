@@ -59,15 +59,25 @@ Rules:
 
 ## Kernel type
 
-Not a monolithic, micro, exo or hybrid kernel. It is a **library OS**: the
-scheduler is linked into one image with the app, in a single address space,
-with no privilege separation and no syscalls. By size and feature set it is
-closest to a **nanokernel** (scheduling, timers, events, nothing else).
+Not a monolithic, micro, exo or hybrid kernel. Two terms describe it:
+
+- **Library OS** (the concept): OS functions (scheduler, timers, channels,
+  drivers) are libraries the app links in, not a separate kernel.
+- **Unikernel** (the packaging): app + library OS are built into one
+  single-purpose, single-address-space image, with no privilege separation and
+  no syscalls. Each board's firmware image is one unikernel, built from shared
+  crates. There is no common runtime between images; what they share is the
+  platform below (the bare chip), not a runtime.
+
+By size and feature set the kernel part is **nanokernel**-class (scheduling,
+timers, events, nothing else).
 
 - Services are tasks with typed channels between them: microkernel-*shaped*
   structure, but without isolation or user-space servers.
-- Hardware is reached directly through HAL traits: exokernel-like in spirit,
-  but there is no protection layer.
+- Hardware is reached directly through HAL traits: exokernel-like in spirit
+  (library-OS lineage), but there is no protection layer.
+- Isolation is a possible later step on chips with an MPU (see Tock and
+  Hubris for Rust examples); the channel-based design carries over.
 
 Scheduling model: cooperative async tasks (Embassy) or interrupt-priority
 tasks (RTIC). Handlers never block. The CPU sleeps (`WFI`) when idle.
@@ -121,6 +131,24 @@ Rules to keep it small:
 - **CI size gate:** build every board in release mode and fail on flash/RAM
   budget regressions (`cargo size` / `cargo bloat`); budgets are per board and
   stored in the repo.
+
+## Images (one unikernel per device)
+
+Each device role is a separate image built from the same crates; Cargo
+features select which services are linked in.
+
+| Image | Services linked in (example) |
+|---|---|
+| `lama` (analyzer) | router, stats, shell, config, display |
+| `sensor-node` | router, config, power, sensor task |
+| `gateway` | router, stats, log, serial/WiFi bridge |
+
+Consequences:
+
+- Footprint budgets are per image and per board, enforced in CI.
+- Updates ship as a full, signed image (OTA design is an open question).
+- Debugging is by probe and logs (`probe-rs` + `defmt`), not an on-target
+  shell; the serial shell is a service that can be left out.
 
 ## Test strategy
 
@@ -207,3 +235,6 @@ rust/
   smaller, interrupt-priority model). Default: Embassy.
 - Wire format: bump to v2 with the explicit layout, or stay on v1?
 - ESP32 variants: Xtensa (needs `espup`) or RISC-V (C3/C6)?
+- OTA: image format, signing, rollback, and flash layout per board.
+- Isolation: is MPU-based separation of services ever needed (untrusted or
+  third-party code), or is a single trusted image enough?
