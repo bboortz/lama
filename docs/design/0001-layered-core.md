@@ -140,6 +140,30 @@ STM32F3DISCOVERY radio options:
 The on-board gyro and accelerometer/magnetometer double as the first `Imu`
 trait implementation.
 
+### Heltec V4 board notes (research, to verify against the schematic of the exact revision)
+
+Sources: Heltec product page and LNA wiki, Meshtastic `heltec_v4/variant.h`,
+RadioLib discussion #1665 and a TTN forum thread on V4 custom firmware.
+
+- **SX1262 pins:** SCK 9, MISO 11, MOSI 10, NSS 8, RST 12, BUSY 13, DIO1 14.
+  DIO2 drives the RF switch (`SetDio2AsRfSwitch`). TCXO on DIO3: Meshtastic
+  uses 1.8 V; third-party custom-firmware reports on the V4 are inconclusive.
+- **Front-end (external PA/LNA), revision dependent:**
+  - Always: chip enable GPIO2 high; front-end power GPIO7 (on by default).
+  - TX: PA path (CTX high, DIO2 high). RX with LNA: CTX low, DIO2 low.
+    RX bypass: CTX high, DIO2 low.
+  - CTX/mode pin is GPIO5 on boards with the KCT8103L (V4.3 per the Heltec
+    wiki) and GPIO46 on GC1109 boards (per Meshtastic and the forum thread).
+- **Other:** Vext control GPIO36 on V4 (R2), GPIO40 on V4-R8; button GPIO0;
+  battery ADC GPIO1 with control GPIO37; GPS enable GPIO34, reset 42,
+  PPS 41, UART TX/RX 38/39. OLED I2C pins not yet confirmed.
+- **Cautions:** V4-to-V4 with RadioLib is reported working; V4 to a Waveshare
+  SX1262 had unresolved receive problems in that thread. The front-end
+  amplifies up to about 28 dBm, far above the EU limits: start at a low
+  TX power setting and keep the antenna attached.
+- **Open:** exact hardware revision (V4 / V4.2 / V4.3, R2 or R8) decides the
+  FEM pin and Vext pin.
+
 Pass criteria for "common ground works": same `core`/`services` crates build
 for both chips with no `cfg` outside board crates; the boards exchange
 BEAT/PING/PONG with correct RSSI/SNR/loss stats; flash/RAM within budget.
