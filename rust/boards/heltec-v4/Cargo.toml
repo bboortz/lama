@@ -1,12 +1,23 @@
 [package]
 name = "lama-board-heltec-v4"
 version = "0.1.0"
-description = "Heltec WiFi LoRa 32 V4 (ESP32-S3 + SX1262) board support for LAMA: pin map and front-end control"
+description = "Heltec WiFi LoRa 32 V4 (ESP32-S3 + SX1262) board support for LAMA: pin map, front-end control and SX1262 radio driver"
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
-# Hardware-independent part only for now (pins, front-end logic), so it is
-# testable on a PC. The esp-hal / lora-phy glue is added behind a feature once
-# the Xtensa toolchain is available.
+[features]
+default = []
+# SX1262 radio driver on top of lora-phy (generic over embedded-hal traits).
+lora = ["dep:lora-phy", "dep:embedded-hal", "dep:embedded-hal-async", "dep:lama-hal", "dep:lama-radio-bridge"]
+
 [dependencies]
+lora-phy = { version = "3.0.1", optional = true }
+embedded-hal = { version = "1", optional = true }
+embedded-hal-async = { version = "1", optional = true }
+lama-hal = { path = "../../hal", optional = true }
+lama-radio-bridge = { path = "../../bridge", optional = true }
+
+[dev-dependencies]
+defmt = "0.3"
+embassy-futures = "0.1"

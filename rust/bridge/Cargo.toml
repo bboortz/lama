@@ -1,0 +1,17 @@
+[package]
+name = "lama-radio-bridge"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Adapts an async radio driver (e.g. lora-phy) to the synchronous lama-hal Radio trait"
+
+[dependencies]
+lama-hal = { path = "../hal" }
+embassy-sync = "0.6"
+embassy-futures = "0.1"
+
+[dev-dependencies]
+lama-app = { path = "../app" }
+lama-core = { path = "../core" }
+critical-section = { version = "1", features = ["std"] }

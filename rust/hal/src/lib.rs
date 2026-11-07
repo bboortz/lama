@@ -45,17 +45,26 @@ pub struct RxMeta {
 /// Something the radio reports after the fact (set by an interrupt on real hardware).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RadioEvent {
+    /// Initialisation started by [`Radio::begin`] has finished successfully.
+    Ready,
     /// A frame is ready to be read with [`Radio::read`].
     RxReady,
     /// The frame passed to [`Radio::transmit`] has been sent.
     TxDone,
+    /// An operation that was accepted earlier failed on the hardware
+    /// (initialisation, transmission or reception).
+    Error,
 }
 
 /// A packet radio. Calls never block; completion is reported via [`Radio::poll_event`].
+///
+/// Methods return `Err` only when a request cannot even be started (radio busy,
+/// frame too long, ...). Hardware failures that happen later are reported as
+/// [`RadioEvent::Error`].
 pub trait Radio {
     type Error: core::fmt::Debug;
 
-    /// Initialises the radio with the given parameters.
+    /// Starts initialising the radio; [`RadioEvent::Ready`] follows when done.
     fn begin(&mut self, params: &RadioParams) -> Result<(), Self::Error>;
 
     /// Starts (or continues) listening.

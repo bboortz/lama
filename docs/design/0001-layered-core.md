@@ -96,12 +96,18 @@ pub trait Radio {
     fn begin(&mut self, params: &RadioParams) -> Result<(), Self::Error>;
     fn start_rx(&mut self) -> Result<(), Self::Error>;
     fn transmit(&mut self, frame: &[u8]) -> Result<(), Self::Error>;
-    fn poll_event(&mut self) -> Option<RadioEvent>;          // RxReady | TxDone
+    fn poll_event(&mut self) -> Option<RadioEvent>;          // Ready | RxReady | TxDone | Error
     fn read(&mut self, buf: &mut [u8]) -> Result<Option<(usize, RxMeta)>, Self::Error>;
 }
 pub trait Clock { fn now_ms(&self) -> u32; }
 // Storage, Serial, Display, Gps, Imu follow the same pattern (not yet implemented).
 ```
+
+`begin()` and `transmit()` only *start* the operation; `Ready` / `TxDone`
+follow later, `Error` reports a hardware failure. The node arms a watchdog
+(`Config::op_timeout_ms`) for every init and transmission, so a hung radio or
+a lost completion interrupt becomes a Fault, then retry, then Fatal after
+three consecutive faults. One `RxReady` makes the node drain all pending frames.
 
 `RadioParams`: frequency, SF, BW, CR, sync word, preamble, TX power.
 SX127x (ESP32 boards today) and SX126x/STM32WL implement the same trait,
@@ -287,9 +293,21 @@ rust/
    multi-node simulation.
    **Done**: `rust/hal` (traits), `rust/app` (node logic), `rust/sim`
    (deterministic simulator: airtime, half-duplex, collisions, per-link loss
-   and RSSI/SNR, fault injection; 10 network tests). `hal` and `app` build
-   `no_std` for `thumbv7em-none-eabihf`.
-3. `boards/esp32` with `lora-phy` + SX127x; user flashes and reports logs.
+   and RSSI/SNR, fault injection incl. hung init and lost TX-done; 13 network
+   tests). `hal` and `app` build `no_std` for `thumbv7em-none-eabihf`.
+2b. **Done**: `rust/bridge` (`lama-radio-bridge`): adapts an async driver
+   (`RadioDriver`, implemented over `lora-phy`) to the synchronous `Radio` trait
+   with fixed-size queues, no heap (5 host tests incl. two real nodes over bridges).
+2c. **Done, untested on hardware**: `boards/heltec-v4` feature `lora`:
+   SX1262 driver on `lora-phy` (TCXO 1.8 V, DIO2 RF switch, DC-DC, front-end pin
+   control, TX power cap). Compiles for `thumbv7em-none-eabihf` and
+   `riscv32imc-unknown-none-elf`; pin logic and parameter mapping unit-tested
+   with mock pins. **Not yet built for the ESP32-S3 (Xtensa).**
+2d. **Next (needs the Xtensa toolchain)**: Heltec firmware binary: esp-hal
+   SPI (GPIO 9/11/10, NSS 8), reset/busy/DIO1 pins, Vext/FEM power, runtime
+   front-end detection (GPIO2), an Embassy executor running `bridge::run` next
+   to the `Node` loop, and a defmt/serial log. Then the user flashes and reports logs.
+3. `boards/esp32` with `lora-phy` + SX127x.
 4. Shell/config/display services; LAMA app reaches parity with the C++ version.
 5. Footprint CI gate and size budgets per board.
 6. STM32F3DISCOVERY as second target (radio option A or B) to prove

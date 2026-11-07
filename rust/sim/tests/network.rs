@@ -167,3 +167,37 @@ fn same_seed_gives_identical_results() {
     assert_eq!(run(7), run(7));
     assert_ne!(run(7), run(8), "different seeds should differ");
 }
+
+#[test]
+fn hung_radio_init_is_caught_by_the_watchdog_and_recovers() {
+    let (mut net, a, b) = two_node_net();
+    net.hang_begin(a, 1);
+    net.run_ms(1_000);
+    // still waiting for Ready (watchdog is 2 s)
+    assert_ne!(net.node(a).state(), State::Idle);
+    net.run_ms(10_000);
+    assert_eq!(net.node(a).state(), State::Idle);
+    assert!(
+        net.node(b).table().get(1).is_some(),
+        "a recovered and beacons"
+    );
+}
+
+#[test]
+fn lost_tx_done_is_caught_by_the_watchdog_and_recovers() {
+    let (mut net, a, b) = two_node_net();
+    net.drop_tx_done(a, 1);
+    net.run_ms(15_000);
+    assert_eq!(net.node(a).state(), State::Idle);
+    assert!(net.node(a).tx_count() >= 10);
+    assert!(net.node(b).table().get(1).is_some());
+}
+
+#[test]
+fn persistent_hang_ends_in_fatal() {
+    let (mut net, a, _b) = two_node_net();
+    net.hang_begin(a, 100);
+    net.run_ms(60_000);
+    assert_eq!(net.node(a).state(), State::Fatal);
+    assert_eq!(net.node(a).tx_count(), 0);
+}

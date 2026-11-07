@@ -11,18 +11,18 @@ Rust version reaches parity.
 | `core` (`lama-core`) | `no_std`, dependency-free: wire format v2 (`packet`), link statistics (`stats`), TX/RX state machine (`state`) | implemented, 33 tests |
 | `hal` (`lama-hal`) | `no_std` traits: `Radio` (non-blocking, event polling), `Clock`, `RadioParams` | implemented |
 | `app` (`lama-app`) | `no_std` `Node`: runs the state machine against a `Radio` + `Clock`, sends beacons, records link stats, retries radio init | implemented |
-| `sim` (`lama-sim`) | Deterministic network simulator: virtual clock, airtime, half-duplex, collisions, per-link loss and RSSI/SNR, fault injection | implemented, 10 tests |
+| `sim` (`lama-sim`) | Deterministic network simulator: virtual clock, airtime, half-duplex, collisions, per-link loss and RSSI/SNR, fault injection | implemented, 13 tests |
+| `bridge` (`lama-radio-bridge`) | `no_std`, no heap: adapts an async radio driver to the sync `Radio` trait (command slot, event and frame queues, driver task) | implemented, 5 tests |
+| `boards/heltec-v4` | Heltec WiFi LoRa 32 V4: pin map, front-end (GC1109 / KCT8103L) logic, and with feature `lora` an SX1262 driver on `lora-phy` | driver compiles for Cortex-M4 and RISC-V, **not yet built for ESP32-S3 or run on hardware**; 13 tests |
 
-| `boards/heltec-v4` | Heltec WiFi LoRa 32 V4: pin map and front-end (GC1109 / KCT8103L) detection and control logic, host-tested. esp-hal + lora-phy glue still to come (needs the Xtensa toolchain) | partial, 8 tests |
-
-Planned next: Heltec V4 radio glue (SX1262 via `lora-phy`), `boards/stm32*`,
-shell/config/display services, footprint CI gate.
+Planned next: Heltec firmware binary (esp-hal, needs the Xtensa toolchain),
+`boards/stm32*`, shell/config/display services, footprint CI gate.
 
 ## Develop
 
 ```sh
 cd rust
-cargo test                                   # host tests
+cargo test --features lama-board-heltec-v4/lora   # host tests
 cargo clippy --all-targets -- -D warnings    # lint
 cargo fmt --all -- --check                   # format
 rustup target add thumbv7em-none-eabihf      # Cortex-M4F (STM32F3/F4)

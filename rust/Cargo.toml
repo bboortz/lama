@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["core", "hal", "app", "sim", "boards/heltec-v4"]
+members = ["core", "hal", "app", "sim", "bridge","boards/heltec-v4"]
 
 [workspace.package]
 edition = "2021"

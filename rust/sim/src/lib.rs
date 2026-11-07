@@ -8,7 +8,7 @@
 //! * a receiver must have been listening since before the frame started,
 //! * collisions (two audible frames overlapping at a receiver destroy both),
 //! * per-link RSSI/SNR and random loss from a seeded PRNG,
-//! * fault injection (radio initialisation failures).
+//! * fault injection (failed or hung initialisation, lost TX-done events).
 //!
 //! The same seed always produces the same result.
 
@@ -66,6 +66,10 @@ struct RadioState {
     events: VecDeque<RadioEvent>,
     rx_queue: VecDeque<(Vec<u8>, RxMeta)>,
     fail_begin: u32,
+    /// Fault injection: `begin` is accepted but never reports Ready.
+    hang_begin: u32,
+    /// Fault injection: the next transmissions never report TxDone.
+    drop_tx_done: u32,
 }
 
 struct Frame {
@@ -102,7 +106,11 @@ impl Medium {
         for r in &mut self.radios {
             if r.tx_until.is_some_and(|t| t <= now) {
                 r.tx_until = None;
-                r.events.push_back(RadioEvent::TxDone);
+                if r.drop_tx_done > 0 {
+                    r.drop_tx_done -= 1;
+                } else {
+                    r.events.push_back(RadioEvent::TxDone);
+                }
             }
         }
         let finished: Vec<usize> = self
@@ -178,7 +186,12 @@ impl Radio for SimRadio {
             r.fail_begin -= 1;
             return Err(SimError::InitFailed);
         }
+        if r.hang_begin > 0 {
+            r.hang_begin -= 1;
+            return Ok(()); // accepted, but Ready never comes
+        }
         r.begun = true;
+        r.events.push_back(RadioEvent::Ready);
         Ok(())
     }
 
@@ -269,6 +282,7 @@ impl Network {
             radio: RadioParams::EU868_DEFAULT,
             beacon_interval_ms,
             retry_delay_ms: 500,
+            op_timeout_ms: 2000,
         }
     }
 
@@ -299,6 +313,16 @@ impl Network {
     /// Makes the next `times` radio initialisations of `node` fail.
     pub fn fail_begin(&mut self, node: usize, times: u32) {
         self.medium.borrow_mut().radios[node].fail_begin = times;
+    }
+
+    /// Makes the next `times` initialisations of `node` hang (no Ready event).
+    pub fn hang_begin(&mut self, node: usize, times: u32) {
+        self.medium.borrow_mut().radios[node].hang_begin = times;
+    }
+
+    /// Makes the next `times` transmissions of `node` never report TxDone.
+    pub fn drop_tx_done(&mut self, node: usize, times: u32) {
+        self.medium.borrow_mut().radios[node].drop_tx_done = times;
     }
 
     pub fn node(&self, index: usize) -> &SimNode {
