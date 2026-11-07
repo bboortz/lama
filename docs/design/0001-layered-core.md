@@ -1,18 +1,27 @@
-# 0001 – Layered core with a minimal event kernel
+# 0001 – Layered Rust core with a minimal cooperative kernel
 
-Status: **Draft** · Date: 2026-11-07
+Status: **Draft (v2, Rust)** · Date: 2026-11-07
 
 ## Goal
 
 One portable core for radio-capable embedded devices (ESP32, RP2040, nRF52,
-STM32/STM32WL), smallest possible footprint, testable on a PC without
-hardware. LAMA becomes the first *app* on top of it.
+STM32/STM32WL), with a **small footprint on every board in use**, testable on
+a PC without hardware. LAMA becomes the first *app* on top of it.
+
+## Decisions
+
+- **Language: Rust (`no_std`, no heap).** C only where it is needed (see below).
+- **Kernel: cooperative, run-to-completion, statically linked** (Embassy
+  executor, or RTIC). We do not write a kernel from scratch in Rust.
+- **Existing C++ LAMA code stays in the repo root** as the working reference
+  until the Rust version reaches parity. The Rust workspace lives in `rust/`.
 
 ## Non-goals (for now)
 
 - Preemptive threads, memory protection, processes, dynamic loading.
-- WiFi/BLE stacks inside the core (board/service concern).
-- A second protocol: the existing LAMA packet format is the starting point.
+- WiFi/BLE stacks in the core (board concern, usually vendor C).
+- A new protocol: the LAMA packet format is the starting point (wire format
+  becomes explicit, see "Known issues").
 
 ## Layers
 
@@ -25,12 +34,11 @@ hardware. LAMA becomes the first *app* on top of it.
 │           (each = one task)      │
 ├──────────────────────────────────┤
 │ core      packet · state machine │
-│           (no hardware, no I/O)  │
+│           (no_std, no hardware)  │
 ├──────────────────────────────────┤
-│ kernel    event queue · task     │
-│           table · timer wheel ·  │
-│           idle (WFI) · packet    │
-│           buffer pool            │
+│ kernel    executor · channels ·  │
+│           timers · idle (WFI) ·  │
+│           static buffer pool     │
 ├──────────────────────────────────┤
 │ HAL traits  Radio · Storage ·    │
 │             Clock · Serial ·     │
@@ -44,53 +52,80 @@ hardware. LAMA becomes the first *app* on top of it.
 
 Rules:
 
-1. Each layer calls only the layer below it.
-2. ISRs live in `boards` and only call `kernel.post(event)`.
-3. `core` depends on neither `kernel` nor hardware.
-4. `services`/`apps` never include chip-specific headers.
+1. Each layer depends only on the layer below it.
+2. ISRs live in `boards` and only wake a task / post an event.
+3. `core` depends on neither `kernel` nor hardware, so it runs in `cargo test`.
+4. `services`/`apps` never import chip crates.
 
-## Kernel (scheduler only)
+## Kernel type
 
-A run-to-completion event loop, ~200 lines:
+Not a monolithic, micro, exo or hybrid kernel. It is a **library OS**: the
+scheduler is linked into one image with the app, in a single address space,
+with no privilege separation and no syscalls. By size and feature set it is
+closest to a **nanokernel** (scheduling, timers, events, nothing else).
 
-- **Event**: `{ id, task, arg }`; large data travels as a buffer-pool index.
-- **Queue**: fixed-size ring buffer; ISRs push, the main loop pops.
-- **Task table**: static array of `{ id, handler, state }`.
-- **Timers**: one hardware tick drives a software timer list; expiry posts an event.
-- **Idle**: empty queue → `WFI`/light sleep.
-- **Memory**: static pools only, no heap allocation at runtime.
+- Services are tasks with typed channels between them: microkernel-*shaped*
+  structure, but without isolation or user-space servers.
+- Hardware is reached directly through HAL traits: exokernel-like in spirit,
+  but there is no protection layer.
 
-Handlers never block. Waiting means "arm a timer" or "wait for an event".
-
-Kernel API seen by tasks (the only thing a test kernel must replace):
-
-```cpp
-bool     kernel_post(Event e);                 // ISR-safe
-TimerId  kernel_timer_start(TaskId t, uint32_t ms, EventId id, bool repeat);
-void     kernel_timer_stop(TimerId id);
-uint32_t kernel_now_ms();
-```
+Scheduling model: cooperative async tasks (Embassy) or interrupt-priority
+tasks (RTIC). Handlers never block. The CPU sleeps (`WFI`) when idle.
+No heap; packet buffers come from static pools and travel by index/reference.
 
 ## HAL traits (sketch)
 
-```cpp
-struct Radio {
-  virtual bool begin(const RadioParams&) = 0;
-  virtual bool start_rx() = 0;
-  virtual bool transmit(const uint8_t* buf, size_t len) = 0;  // non-blocking
-  virtual bool read(uint8_t* buf, size_t& len, RxMeta& meta) = 0; // rssi, snr, freq err
-  virtual bool set_params(const RadioParams&) = 0;
-};
-// Storage (config), Clock, Serial, Display, Gps, Imu follow the same pattern.
+```rust
+pub trait Radio {
+    async fn begin(&mut self, p: &RadioParams) -> Result<(), RadioError>;
+    async fn transmit(&mut self, buf: &[u8]) -> Result<(), RadioError>;
+    async fn receive(&mut self, buf: &mut [u8]) -> Result<RxMeta, RadioError>; // rssi, snr, freq err
+    async fn set_params(&mut self, p: &RadioParams) -> Result<(), RadioError>;
+}
+// Storage, Clock, Serial, Display, Gps, Imu follow the same pattern.
 ```
 
-`RadioParams` covers frequency, SF, BW, CR, sync word, preamble, TX power.
-SX127x (RadioLib) and SX126x/STM32WL implement the same trait.
+`RadioParams`: frequency, SF, BW, CR, sync word, preamble, TX power.
+SX127x (ESP32 boards today) and SX126x/STM32WL implement the same trait,
+backed by the `lora-phy` crate.
+
+## Where C is still used
+
+C is allowed only where Rust has no practical option:
+
+- **Vendor radio/connectivity blobs:** ESP-IDF WiFi/BLE (if needed on ESP32),
+  Nordic SoftDevice (if BLE is needed on nRF52).
+- **RadioLib via FFI**, only as a fallback if `lora-phy` misbehaves on a
+  specific SX127x board.
+- **Boot/startup code** supplied by the chip vendor/HAL crates.
+
+All C sits behind the same HAL traits, in a board crate, never in `core`,
+`services` or `apps`.
+
+## Footprint policy
+
+The smallest board in use sets the budget. Exact boards are still to be
+listed (see open questions); the class we design for is **~256 KB flash and
+~64 KB RAM** (e.g. STM32WL, nRF52 class), which also covers ESP32 and RP2040
+with room to spare.
+
+Rules to keep it small:
+
+- `no_std`, no `alloc` in `core`, `kernel`, `services`, `apps`.
+- Static pools and fixed-size queues; capacities are compile-time constants.
+- Release profile: `opt-level = "z"`, `lto = "fat"`, `codegen-units = 1`,
+  `panic = "abort"`.
+- Logging via `defmt` (no `core::fmt` on target) and behind a feature flag.
+- Cargo features per service, so unused services cost nothing.
+- Fixed-point on the wire and in stats; no floating point on chips without an FPU.
+- **CI size gate:** build every board in release mode and fail on flash/RAM
+  budget regressions (`cargo size` / `cargo bloat`); budgets are per board and
+  stored in the repo.
 
 ## Test strategy
 
-The test kernel and the `host` board replace the real kernel and hardware.
-Tasks, services and core are the **same code** in both builds.
+The `host` board replaces hardware; the same tasks, services and core run on
+the PC.
 
 ```
  production                      test (host)
@@ -98,71 +133,77 @@ Tasks, services and core are the **same code** in both builds.
 │ apps/services │              │ apps/services     │  same code
 │ core          │              │ core              │  same code
 ├───────────────┤              ├───────────────────┤
-│ real kernel   │              │ test kernel       │
+│ Embassy/RTIC  │              │ host executor     │
 │ ISR + WFI     │              │ virtual clock,    │
 │ HW timer      │              │ manual stepping   │
 ├───────────────┤              ├───────────────────┤
-│ HAL: SX127x   │              │ HAL: sim radio    │
+│ HAL: lora-phy │              │ HAL: sim radio    │
 │ board: ESP32  │              │ board: host       │
 └───────────────┘              └───────────────────┘
 ```
 
-- Virtual clock: `advance(10min)` runs instantly (timeouts, TX intervals, beacon loss).
-- `step()` dispatches one event for assertions after each step.
+- Virtual clock: advance minutes of time instantly (timeouts, TX intervals,
+  beacon loss). To be verified: Embassy's `embassy-time` mock driver; if it
+  does not fit, the kernel keeps a thin time trait we can fake.
 - Simulated channel: N virtual nodes, drop/delay/corrupt, RSSI/SNR by distance.
 - Record/replay of real field logs as regression tests.
-- Levels: unit (core) → component (service + test kernel) → network → hardware-in-the-loop.
+- Property tests (`proptest`) for packet encode/decode.
+- Levels: unit (core) → component → network → hardware-in-the-loop.
 
 Not coverable on host: real interrupt timing, SPI/radio quirks, power behavior.
 
-## Mapping from the current LAMA code
+## Mapping from the current C++ LAMA code
 
-| Today | Target |
+| Today (C++) | Target (Rust) |
 |---|---|
-| `state.h` `systemState` (INIT/READY/IDLE/DO_RX/DO_TX/…) | `core` state machine, driven by events |
-| `lora_packet.h` header/payload structs | `core/packet`, explicit (de)serialization |
-| `nodes.*`, `lora_stats.*` (RSSI/SNR/loss per node) | `services/stats` (+ pure logic in `core`) |
-| `lora.*` (RadioLib, SX1276 globals) | `boards/esp32` implementing `Radio` |
-| `serial.*`, `cmd.ino` | `services/shell` over `Serial` trait |
-| `config.*` (NVS) | `services/config` over `Storage` trait |
+| `state.h` `systemState` (INIT/READY/IDLE/DO_RX/DO_TX/…) | `core` state machine |
+| `lora_packet.h` header/payload structs | `core::packet`, explicit (de)serialization |
+| `nodes.*`, `lora_stats.*` | `services::stats` (+ pure logic in `core`) |
+| `lora.*` (RadioLib, SX1276 globals) | `boards/esp32` implementing `Radio` via `lora-phy` |
+| `serial.*`, `cmd.ino` | `services::shell` over `Serial` trait |
+| `config.*` (NVS) | `services::config` over `Storage` trait |
 | `display.*` | `Display` trait + status task |
-| `wifi.*` | board/service (optional) |
+| `wifi.*` | board/service, optional, C where required |
 
-Issues in the current code that the refactor should address:
+## Known issues in the current code (to fix, not port)
 
-- Header structs are sent as raw `struct` memory; the in-file comment already
-  notes the ESP32 padding (8 bytes instead of 7). The wire format must become
-  explicit little-endian byte serialization with a version byte, so all chips agree.
-- Globals are defined in headers (`systemState`, `radio`, `knownNodes`);
-  these need to become instance state owned by a task/service.
-- `String` use in state code should go (heap on small targets).
-- `BEAT` payload carries a `float` (`rsnr`); define fixed-point on the wire.
+- Header structs are sent as raw memory; the code comment already notes ESP32
+  padding (8 bytes instead of 7). The wire format becomes explicit
+  little-endian byte layout with a version byte.
+- Globals defined in headers (`systemState`, `radio`, `knownNodes`) become
+  state owned by a task/service.
+- `String` use in state code (heap) disappears.
+- BEAT payload carries a `float` (`rsnr`); use fixed-point on the wire.
 
 ## Proposed layout
 
 ```
-core/        packet, state machine, link stats      (no hardware)
-kernel/      event queue, tasks, timers, pools
-hal/         trait headers
-services/    router, stats, config, shell, log, power
-apps/        lama
-boards/      esp32, host  (later: rp2040, nrf52, stm32wl)
-test/        host tests, network simulator
+rust/
+  Cargo.toml            workspace
+  core/                 packet, state machine, link stats      (no hardware)
+  hal/                  trait definitions
+  kernel/               channels, timers, pools (thin layer over Embassy/RTIC)
+  services/             router, stats, config, shell, log, power
+  apps/lama/            first app
+  boards/{host,esp32}/  later: rp2040, nrf52, stm32wl
+  sim/                  network simulator + fault injection
+*.ino, *.h              existing C++ reference (unchanged until parity)
 ```
 
 ## Migration plan
 
-1. Extract `core` (packet + state machine + stats) with host unit tests; no behavior change.
-2. Add `kernel` + `host` board + test kernel; run the state machine on the PC.
-3. Define `Radio` trait; wrap current RadioLib code as `boards/esp32`.
-4. Move shell/config/display into services; LAMA becomes an app.
-5. Network simulator with fault injection.
-6. Second target (RP2040 or STM32WL) to prove portability.
+1. Workspace + `core` (packet, state machine, stats) with host unit tests.
+2. `hal` traits + `boards/host` (sim radio, virtual clock) + first
+   multi-node simulation.
+3. `boards/esp32` with `lora-phy` + SX127x; user flashes and reports logs.
+4. Shell/config/display services; LAMA app reaches parity with the C++ version.
+5. Footprint CI gate and size budgets per board.
+6. Second target (RP2040, nRF52 or STM32WL) to prove portability.
 
 ## Open questions
 
-- C++ core (PlatformIO + RadioLib, lowest friction from today's code) or a
-  `no_std` Rust rewrite (Embassy/RTIC)? This doc assumes the architecture is
-  language-independent; the C++ path keeps step 1 cheap.
-- Wire format: keep `magic 0x42`/version 1 or bump to v2 with the explicit layout?
-- Which ESP32 boards (pin maps) to support first?
+- Exact list of boards/chips in use (sets footprint budgets and pin maps).
+- Embassy vs RTIC as the executor (Embassy: async, broad HAL support; RTIC:
+  smaller, interrupt-priority model). Default: Embassy.
+- Wire format: bump to v2 with the explicit layout, or stay on v1?
+- ESP32 variants: Xtensa (needs `espup`) or RISC-V (C3/C6)?
