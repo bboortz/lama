@@ -8,10 +8,13 @@ Rust version reaches parity.
 
 | Crate | What | Status |
 |---|---|---|
-| `core` (`lama-core`) | `no_std`, dependency-free: wire format v2 (`packet`), link statistics (`stats`), TX/RX state machine (`state`) | implemented, host-tested |
+| `core` (`lama-core`) | `no_std`, dependency-free: wire format v2 (`packet`), link statistics (`stats`), TX/RX state machine (`state`) | implemented, 33 tests |
+| `hal` (`lama-hal`) | `no_std` traits: `Radio` (non-blocking, event polling), `Clock`, `RadioParams` | implemented |
+| `app` (`lama-app`) | `no_std` `Node`: runs the state machine against a `Radio` + `Clock`, sends beacons, records link stats, retries radio init | implemented |
+| `sim` (`lama-sim`) | Deterministic network simulator: virtual clock, airtime, half-duplex, collisions, per-link loss and RSSI/SNR, fault injection | implemented, 10 tests |
 
-Planned next: `hal` (traits), `kernel`, `boards/host` (simulated radio and
-virtual clock), `boards/esp32`, `boards/stm32*`, `sim`.
+Planned next: `boards/esp32` (SX126x/SX127x via `lora-phy`), `boards/stm32*`,
+shell/config/display services, footprint CI gate.
 
 ## Develop
 

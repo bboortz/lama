@@ -83,16 +83,24 @@ Scheduling model: cooperative async tasks (Embassy) or interrupt-priority
 tasks (RTIC). Handlers never block. The CPU sleeps (`WFI`) when idle.
 No heap; packet buffers come from static pools and travel by index/reference.
 
-## HAL traits (sketch)
+## HAL traits (implemented in `rust/hal`)
+
+The traits are **synchronous and non-blocking**, matching the event-driven
+state machine: calls start an operation, and completion is reported through
+`poll_event()` (set by an interrupt on real hardware). This replaced the
+earlier async sketch; an Embassy board can still wrap the calls in tasks.
 
 ```rust
 pub trait Radio {
-    async fn begin(&mut self, p: &RadioParams) -> Result<(), RadioError>;
-    async fn transmit(&mut self, buf: &[u8]) -> Result<(), RadioError>;
-    async fn receive(&mut self, buf: &mut [u8]) -> Result<RxMeta, RadioError>; // rssi, snr, freq err
-    async fn set_params(&mut self, p: &RadioParams) -> Result<(), RadioError>;
+    type Error: core::fmt::Debug;
+    fn begin(&mut self, params: &RadioParams) -> Result<(), Self::Error>;
+    fn start_rx(&mut self) -> Result<(), Self::Error>;
+    fn transmit(&mut self, frame: &[u8]) -> Result<(), Self::Error>;
+    fn poll_event(&mut self) -> Option<RadioEvent>;          // RxReady | TxDone
+    fn read(&mut self, buf: &mut [u8]) -> Result<Option<(usize, RxMeta)>, Self::Error>;
 }
-// Storage, Clock, Serial, Display, Gps, Imu follow the same pattern.
+pub trait Clock { fn now_ms(&self) -> u32; }
+// Storage, Serial, Display, Gps, Imu follow the same pattern (not yet implemented).
 ```
 
 `RadioParams`: frequency, SF, BW, CR, sync word, preamble, TX power.
@@ -248,6 +256,10 @@ rust/
    **Done** in `rust/core` (33 tests; builds `no_std` for `thumbv7em-none-eabihf`).
 2. `hal` traits + `boards/host` (sim radio, virtual clock) + first
    multi-node simulation.
+   **Done**: `rust/hal` (traits), `rust/app` (node logic), `rust/sim`
+   (deterministic simulator: airtime, half-duplex, collisions, per-link loss
+   and RSSI/SNR, fault injection; 10 network tests). `hal` and `app` build
+   `no_std` for `thumbv7em-none-eabihf`.
 3. `boards/esp32` with `lora-phy` + SX127x; user flashes and reports logs.
 4. Shell/config/display services; LAMA app reaches parity with the C++ version.
 5. Footprint CI gate and size budgets per board.

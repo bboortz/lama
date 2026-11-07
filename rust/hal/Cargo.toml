@@ -1,0 +1,9 @@
+[package]
+name = "lama-hal"
+version = "0.1.0"
+description = "Hardware abstraction traits for LAMA (radio, clock)"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]

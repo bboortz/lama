@@ -1,0 +1,11 @@
+[package]
+name = "lama-app"
+version = "0.1.0"
+description = "LAMA node logic: beacons, receive, link stats, radio retry (hardware-independent)"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+lama-core = { path = "../core" }
+lama-hal = { path = "../hal" }

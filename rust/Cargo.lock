@@ -3,5 +3,26 @@
 version = 3
 
 [[package]]
+name = "lama-app"
+version = "0.1.0"
+dependencies = [
+ "lama-core",
+ "lama-hal",
+]
+
+[[package]]
 name = "lama-core"
 version = "0.1.0"
+
+[[package]]
+name = "lama-hal"
+version = "0.1.0"
+
+[[package]]
+name = "lama-sim"
+version = "0.1.0"
+dependencies = [
+ "lama-app",
+ "lama-core",
+ "lama-hal",
+]

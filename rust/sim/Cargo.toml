@@ -1,0 +1,12 @@
+[package]
+name = "lama-sim"
+version = "0.1.0"
+description = "Deterministic network simulator for LAMA nodes: virtual clock, shared radio medium"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+lama-core = { path = "../core" }
+lama-hal = { path = "../hal" }
+lama-app = { path = "../app" }
