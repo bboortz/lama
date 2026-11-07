@@ -161,8 +161,13 @@ RadioLib discussion #1665 and a TTN forum thread on V4 custom firmware.
   SX1262 had unresolved receive problems in that thread. The front-end
   amplifies up to about 28 dBm, far above the EU limits: start at a low
   TX power setting and keep the antenna attached.
-- **Open:** exact hardware revision (V4 / V4.2 / V4.3, R2 or R8) decides the
-  FEM pin and Vext pin.
+- **Revision handling:** the front-end type is detected at run time by reading
+  GPIO2 as a floating input about 1 ms after power-up (KCT8103L pulls it high,
+  GC1109 low; method from MeshCore, to be confirmed on real boards), so one
+  firmware serves both. Implemented and unit-tested in
+  `rust/boards/heltec-v4` (`fem.rs`). Vext (OLED) still depends on R2 vs R8.
+- **Open on hardware:** how DIO2 and the mode pin interact per revision;
+  verify with a TX/RX test between two boards.
 
 Pass criteria for "common ground works": same `core`/`services` crates build
 for both chips with no `cfg` outside board crates; the boards exchange

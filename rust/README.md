@@ -13,7 +13,9 @@ Rust version reaches parity.
 | `app` (`lama-app`) | `no_std` `Node`: runs the state machine against a `Radio` + `Clock`, sends beacons, records link stats, retries radio init | implemented |
 | `sim` (`lama-sim`) | Deterministic network simulator: virtual clock, airtime, half-duplex, collisions, per-link loss and RSSI/SNR, fault injection | implemented, 10 tests |
 
-Planned next: `boards/esp32` (SX126x/SX127x via `lora-phy`), `boards/stm32*`,
+| `boards/heltec-v4` | Heltec WiFi LoRa 32 V4: pin map and front-end (GC1109 / KCT8103L) detection and control logic, host-tested. esp-hal + lora-phy glue still to come (needs the Xtensa toolchain) | partial, 8 tests |
+
+Planned next: Heltec V4 radio glue (SX1262 via `lora-phy`), `boards/stm32*`,
 shell/config/display services, footprint CI gate.
 
 ## Develop
