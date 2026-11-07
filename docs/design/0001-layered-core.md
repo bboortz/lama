@@ -117,6 +117,7 @@ All C sits behind the same HAL traits, in a board crate, never in `core`,
 | Board | Chip | Radio | Role |
 |---|---|---|---|
 | ESP32 + SX127x (existing LAMA hardware) | ESP32 (variant to confirm) | SX127x on SPI | First real radio target |
+| Heltec WiFi LoRa 32 V4 (listing: Meshtastic, OLED, GPS, solar/battery input) | ESP32-S3 (Xtensa; to verify) | SX1262 (SX126x) on SPI, likely with an external front-end/PA to check in Heltec's pin docs | Second radio chip: proves the `Radio` trait across SX127x and SX126x; also covers the optional OLED/GPS/battery parts |
 | STM32F3DISCOVERY | STM32F303VC, Cortex-M4F 72 MHz, 256 KB flash, ~48 KB RAM, on-board ST-LINK/V2 | none on board | Second target: proves portability and the small footprint |
 | STM32F4 "Black Pill" clone (FEIYANG V3.0, USB-C) | F401CCU6 (84 MHz, 256 KB flash, 64 KB RAM) or F411CEU6 (100 MHz, 512 KB flash, 128 KB RAM); variant to confirm | none on board | Third target / cheap radio host; no on-board debugger, flash via SWD header (e.g. the F3DISCOVERY's ST-LINK) or USB DFU |
 
